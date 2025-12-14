@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wave Lab</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #111;
+            color: #eee;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 320px;
+            background-color: #1a1a1a;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-right: 1px solid #333;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        h2 { margin: 0 0 10px 0; color: #00d2ff; }
+
+        .control-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        input[type="number"] {
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            width: 80px;
+            flex-grow: 1;
+        }
+
+        select {
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 8px 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn-primary { background-color: #00d2ff; color: #000; }
+        .btn-primary:hover { background-color: #00a5c9; }
+
+        .btn-danger { background-color: #ff4444; color: white; padding: 4px 8px; font-size: 12px; }
+
+        #freq-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            border-top: 1px solid #333;
+            padding-top: 10px;
+        }
+
+        .freq-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #252525;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            border-left: 3px solid #555;
+        }
+        
+        .type-sine { border-left-color: #00d2ff; }
+        .type-square { border-left-color: #ff00ff; }
+        .type-sawtooth { border-left-color: #ffae00; }
+        .type-triangle { border-left-color: #00ff00; }
+
+        .wave-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .wave-type-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #888;
+        }
+
+        #volume-control {
+            margin-top: auto;
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        /* Canvas */
+        #canvas-container {
+            flex-grow: 1;
+            position: relative;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* EDITABLE EQUATION BAR */
+        #equation-bar {
+            background-color: #0a0a0a;
+            border-top: 1px solid #333;
+            padding: 10px 20px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+            gap: 10px;
+        }
+
+        .eq-label {
+            color: #888;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 18px;
+            white-space: nowrap;
+        }
+
+        #equation-input {
+            background: transparent;
+            border: none;
+            color: #00d2ff;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 18px;
+            width: 100%;
+            outline: none;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 2px;
+            transition: border-color 0.3s;
+        }
+
+        #equation-input:focus {
+            border-bottom: 1px solid #00d2ff;
+        }
+
+        #apply-btn {
+            background: #333;
+            color: #fff;
+            padding: 5px 15px;
+            font-size: 12px;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2>Wave Lab</h2>
+        
+        <div class="control-group">
+            <select id="waveType">
+                <option value="sine">Sine</option>
+                <option value="square">Square</option>
+                <option value="sawtooth">Saw</option>
+                <option value="triangle">Tri</option>
+            </select>
+            <input type="number" id="freqInput" placeholder="Hz" value="220">
+            <button class="btn-primary" id="addBtn">Add</button>
+        </div>
+
+        <div id="freq-list">
+            <div style="color: #666; font-style: italic; font-size: 14px;">No active frequencies</div>
+        </div>
+
+        <div id="volume-control">
+            <label style="font-size: 12px; color: #888; display:block; margin-bottom:5px;">Master Volume</label>
+            <input type="range" id="masterVolume" min="0" max="0.5" step="0.01" value="0.1" style="width: 100%;">
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <div id="overlay">
+            <h1 style="color:white">Audio Visualizer</h1>
+            <p style="color:#aaa">Type formulas like: sin(440) + saw(100)</p>
+            <button class="btn-primary" id="initBtn" style="font-size: 1.2rem; padding: 15px 30px;">CLICK TO START</button>
+        </div>
+        
+        <canvas id="visualizer"></canvas>
+
+        <div id="equation-bar">
+            <span class="eq-label">y(t) = </span>
+            <input type="text" id="equation-input" placeholder="Type here... e.g. sin(440) + saw(220)" autocomplete="off">
+            <button id="apply-btn">Apply</button>
+        </div>
+    </div>
+
+<script>
+    // --- Audio Context & State ---
+    let audioCtx;
+    let masterGain;
+    let analyser;
+    // We modify how we store oscillators to be easily wiped
+    let oscillators = []; 
+    let isRunning = false;
+    let oscIdCounter = 0;
+    // Flag to prevent loop when updating input vs updating list
+    let ignoreInputEvent = false;
+
+    // --- DOM Elements ---
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    const freqInput = document.getElementById('freqInput');
+    const waveTypeInput = document.getElementById('waveType');
+    const addBtn = document.getElementById('addBtn');
+    const freqList = document.getElementById('freq-list');
+    const overlay = document.getElementById('overlay');
+    const initBtn = document.getElementById('initBtn');
+    const volSlider = document.getElementById('masterVolume');
+    const eqInput = document.getElementById('equation-input');
+    const applyBtn = document.getElementById('apply-btn');
+
+    function resize() {
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = canvas.parentElement.offsetHeight - 80; // Adjust for bottom bar
+    }
+    window.addEventListener('resize', resize);
+
+    // --- Audio Logic ---
+    
+    function initAudio() {
+        if (audioCtx) return;
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.1; 
+        masterGain.connect(audioCtx.destination);
+
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        masterGain.connect(analyser);
+        
+        isRunning = true;
+        overlay.style.display = 'none';
+        resize();
+        draw();
+    }
+
+    // Generic add function (internal use)
+    function createOscillator(hz, type) {
+        if (!audioCtx) return null;
+
+        const osc = audioCtx.createOscillator();
+        // Map shorthand names to API names
+        let apiType = type;
+        if (type === 'sqr') apiType = 'square';
+        if (type === 'saw') apiType = 'sawtooth';
+        if (type === 'tri') apiType = 'triangle';
+        
+        osc.type = apiType; 
+        osc.frequency.setValueAtTime(hz, audioCtx.currentTime);
+
+        const oscGain = audioCtx.createGain();
+        let vol = 0.3;
+        if (apiType === 'square' || apiType === 'sawtooth') vol = 0.15;
+        oscGain.gain.value = vol;
+
+        osc.connect(oscGain);
+        oscGain.connect(masterGain);
+
+        osc.start();
+
+        const id = oscIdCounter++;
+        return { id, osc, gain: oscGain, freq: hz, type: apiType };
+    }
+
+    function addFrequency(hz, type) {
+        const oscObj = createOscillator(hz, type);
+        if(oscObj) {
+            oscillators.push(oscObj);
+            renderList();
+            updateEquationText(); // Sync Sidebar -> Input
+        }
+    }
+
+    function removeFrequency(id) {
+        const index = oscillators.findIndex(o => o.id === id);
+        if (index !== -1) {
+            const o = oscillators[index];
+            stopOscillator(o);
+            oscillators.splice(index, 1);
+            renderList();
+            updateEquationText(); // Sync Sidebar -> Input
+        }
+    }
+
+    function stopOscillator(o) {
+        o.gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+        setTimeout(() => {
+            o.osc.stop();
+            o.osc.disconnect();
+            o.gain.disconnect();
+        }, 200);
+    }
+
+    function clearAll() {
+        oscillators.forEach(o => stopOscillator(o));
+        oscillators = [];
+        renderList();
+    }
+
+    // --- PARSER LOGIC (Text -> Audio) ---
+
+    function parseAndApplyEquation() {
+        if (!audioCtx) return;
+
+        const text = eqInput.value;
+        
+        // Clear current (without updating text loop)
+        oscillators.forEach(o => stopOscillator(o));
+        oscillators = [];
+
+        // Regex to find things like: sin(440), sqr(200), saw(100.5)
+        // Case insensitive
+        const regex = /(sin|sqr|saw|tri|square|sawtooth|triangle)\s*\(\s*([0-9.]+)\s*\)/gi;
+        
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            let type = match[1].toLowerCase();
+            let freq = parseFloat(match[2]);
+
+            // Normalize names
+            if (type === 'sin') type = 'sine';
+            if (type === 'sqr') type = 'square';
+            if (type === 'saw') type = 'sawtooth';
+            if (type === 'tri') type = 'triangle';
+
+            if (freq > 0) {
+                const oscObj = createOscillator(freq, type);
+                if (oscObj) oscillators.push(oscObj);
+            }
+        }
+        
+        renderList();
+        // We do NOT call updateEquationText() here because the user just typed it!
+    }
+
+    // --- UI Logic ---
+
+    // Updates the Input field based on current active oscillators
+    function updateEquationText() {
+        if (ignoreInputEvent) return;
+
+        if (oscillators.length === 0) {
+            eqInput.value = "";
+            return;
+        }
+
+        let parts = oscillators.map(o => {
+            let func = "sin";
+            if (o.type === 'square') func = "sqr";
+            if (o.type === 'sawtooth') func = "saw";
+            if (o.type === 'triangle') func = "tri";
+            return `${func}(${o.freq})`;
+        });
+
+        eqInput.value = parts.join(" + ");
+    }
+
+    function getColorForType(type) {
+        if (type === 'sine') return '#00d2ff';
+        if (type === 'square') return '#ff00ff';
+        if (type === 'sawtooth') return '#ffae00';
+        if (type === 'triangle') return '#00ff00';
+        return '#fff';
+    }
+
+    function renderList() {
+        freqList.innerHTML = '';
+        if (oscillators.length === 0) {
+            freqList.innerHTML = '<div style="color: #666; font-style: italic; font-size: 14px;">No active frequencies</div>';
+            return;
+        }
+
+        oscillators.forEach(o => {
+            const div = document.createElement('div');
+            div.className = `freq-item type-${o.type}`;
+            div.innerHTML = `
+                <div class="wave-info">
+                    <span class="wave-type-label" style="color:${getColorForType(o.type)}">${o.type}</span>
+                    <span><b>${o.freq}</b> Hz</span>
+                </div>
+                <button class="btn-danger" onclick="removeFrequency(${o.id})">X</button>
+            `;
+            freqList.appendChild(div);
+        });
+    }
+
+    // --- Event Listeners ---
+
+    addBtn.addEventListener('click', () => {
+        const val = parseFloat(freqInput.value);
+        const type = waveTypeInput.value;
+        if (val && val > 0) {
+            addFrequency(val, type);
+        }
+    });
+
+    freqInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addBtn.click();
+    });
+
+    // Equation Input Events
+    eqInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            parseAndApplyEquation();
+            // Optional: flash border to show applied
+            eqInput.style.borderBottomColor = '#00ff00';
+            setTimeout(() => eqInput.style.borderBottomColor = '#333', 500);
+        }
+    });
+
+    applyBtn.addEventListener('click', parseAndApplyEquation);
+
+    volSlider.addEventListener('input', (e) => {
+        if (masterGain) masterGain.gain.value = e.target.value;
+    });
+
+    initBtn.addEventListener('click', () => {
+        initAudio();
+        // Start with an example
+        eqInput.value = "sin(200) + sin(202)";
+        parseAndApplyEquation();
+    });
+
+    // --- Visualization Loop ---
+
+    function draw() {
+        requestAnimationFrame(draw);
+        if (!analyser) return;
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteTimeDomainData(dataArray);
+
+        ctx.fillStyle = '#000'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Grid
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height/2);
+        ctx.lineTo(canvas.width, canvas.height/2);
+        ctx.stroke();
+
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#00d2ff';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#00d2ff';
+
+        ctx.beginPath();
+
+        const sliceWidth = canvas.width * 1.0 / bufferLength;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+            const v = dataArray[i] / 128.0;
+            const y = v * canvas.height / 2;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+            x += sliceWidth;
+        }
+
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitty Follow Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevents scrollbars */
+            background-color: #d4f0f0; /* Soft pastel blue background */
+            cursor: none; /* Hide the actual mouse cursor */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Set canvas to full screen
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    // --- Game Objects ---
+
+    // The "Mouse" target (a ball of yarn)
+    let mouse = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        size: 20,
+        baseColor: '#ff6b6b', // Red yarn
+        activeColor: '#ffd700', // Gold when caught
+        currentColor: '#ff6b6b'
+    };
+
+    // The Cat character
+    let cat = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        size: 60, // Radius of the main body
+        color: '#ffffff', // White cat
+        earColor: '#ffc0cb', // Pink ears
+        speed: 0.05, // Movement smoothing factor (lower = slower, smoother follow)
+        tailAngle: 0,
+        tailSpeed: 0.1
+    };
+
+    // Track actual mouse movement
+    window.addEventListener('mousemove', (event) => {
+        mouse.x = event.clientX;
+        mouse.y = event.clientY;
+    });
+    
+    // Support touch for mobile/tablets
+    window.addEventListener('touchmove', (event) => {
+         // Prevent scrolling on touch devices
+        event.preventDefault();
+        mouse.x = event.touches[0].clientX;
+        mouse.y = event.touches[0].clientY;
+    }, { passive: false });
+
+
+    // --- Helper Functions ---
+
+    // Distance calculation helper
+    function getDistance(x1, y1, x2, y2) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // Drawing helper for circles
+    function drawCircle(x, y, size, color) {
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    // --- Main Game Loop functions ---
+
+    function update() {
+        // Calculate distance to the mouse
+        const dist = getDistance(cat.x, cat.y, mouse.x, mouse.y);
+
+        // Movement physics: Gentle easing towards the target
+        // Instead of moving X pixels, we move a percentage of the remaining distance.
+        // This creates the smooth "floaty" toddler-friendly movement.
+        cat.x += (mouse.x - cat.x) * cat.speed;
+        cat.y += (mouse.y - cat.y) * cat.speed;
+
+        // Interaction Check: Is the cat touching the yarn?
+        // We check if distance is less than cat radius + mouse radius minus a little buffer
+        if (dist < cat.size + mouse.size - 10) {
+            mouse.currentColor = mouse.activeColor; // "Playing" state
+             cat.tailSpeed = 0.2; // Wag tail faster when happy
+        } else {
+            mouse.currentColor = mouse.baseColor; // Normal state
+            cat.tailSpeed = 0.1; // Normal tail wag
+        }
+        
+        // Update tail animation angle
+        cat.tailAngle += cat.tailSpeed;
+    }
+
+    function draw() {
+        // 1. Clear screen
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 2. Draw the Cat (using simple shapes stacked on top of each other)
+        
+        ctx.save();
+        ctx.translate(cat.x, cat.y); // Center drawing coordinates on the cat
+
+        // Tail (drawn first so it's behind the body)
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        // Simple sine wave math to make the tail wag back and forth
+        ctx.quadraticCurveTo(Math.sin(cat.tailAngle)*40, cat.size + 20, Math.sin(cat.tailAngle)*60, cat.size - 10);
+        ctx.lineWidth = 15;
+        ctx.strokeStyle = cat.color;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.closePath();
+
+        // Main Body
+        drawCircle(0, 0, cat.size, cat.color);
+
+        // Ears (triangles)
+        ctx.beginPath();
+        // Left Ear
+        ctx.moveTo(-cat.size/2, -cat.size + 10);
+        ctx.lineTo(-cat.size, -cat.size * 1.5);
+        ctx.lineTo(-cat.size * 0.1, -cat.size + 5);
+        ctx.fillStyle = cat.earColor;
+        ctx.fill();
+        // Right Ear
+        ctx.beginPath();
+        ctx.moveTo(cat.size/2, -cat.size + 10);
+        ctx.lineTo(cat.size, -cat.size * 1.5);
+        ctx.lineTo(cat.size * 0.1, -cat.size + 5);
+        ctx.fillStyle = cat.earColor;
+        ctx.fill();
+
+        // Eyes
+        drawCircle(-cat.size / 3, -cat.size / 5, 8, '#333'); // Left
+        drawCircle(cat.size / 3, -cat.size / 5, 8, '#333');  // Right
+        // Eye shines (cute factor)
+        drawCircle(-cat.size / 3 - 2, -cat.size / 5 - 2, 3, '#fff');
+        drawCircle(cat.size / 3 - 2, -cat.size / 5 - 2, 3, '#fff');
+
+        // Nose
+        drawCircle(0, cat.size / 10, 6, cat.earColor);
+
+        ctx.restore(); // Finish cat drawing settings
+
+        // 3. Draw the "Mouse" (Yarn ball target)
+        // We draw a slightly messy circle to look like yarn
+        drawCircle(mouse.x, mouse.y, mouse.size, mouse.currentColor);
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, mouse.size - 5, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Draw string connecting yarn to actual mouse pointer position (invisible cursor)
+        // This helps connect the movement visually.
+        ctx.beginPath();
+        ctx.moveTo(mouse.x, mouse.y);
+        // A little curly string hanging off
+        ctx.quadraticCurveTo(mouse.x - 10, mouse.y + 30, mouse.x + 5, mouse.y + 50);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = mouse.currentColor;
+        ctx.stroke();
+    }
+
+    // Game loop
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    // Start the game
+    gameLoop();
+
+</script>
+</body>
+</html>

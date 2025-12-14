@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #0f1014;
+            color: white;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #4db8ff, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 50px;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Card Style */
+        .card {
+            background: #1a1c23;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 25px;
+            transition: transform 0.2s, border-color 0.2s;
+            text-decoration: none; /* Removes underline from links */
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: #555;
+            background: #20222b;
+        }
+
+        /* Category Tag */
+        .tag {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .tag-game { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+        .tag-tool { background: rgba(77, 184, 255, 0.2); color: #4db8ff; }
+        .tag-sim { background: rgba(255, 204, 0, 0.2); color: #ffcc00; }
+
+        h2 { margin: 0 0 10px 0; font-size: 1.4rem; }
+        
+        p.desc {
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.5;
+            margin: 0 0 20px 0;
+            flex-grow: 1;
+        }
+
+        .launch-btn {
+            background: #333;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .card:hover .launch-btn {
+            background: white;
+            color: black;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Project Hub</h1>
+    <p class="subtitle">A collection of applications.</p>
+    <p class="subtitle">By Jorge Gomez</p>
+
+    <div class="grid">
+
+        <a href="cirlce.html" class="card">
+            <span class="tag tag-game">Game</span>
+            <h2>Tether Battle</h2>
+            <p class="desc">A physics survival game where movement creates lines. Cut your opponent's lines to win.</p>
+            <div class="launch-btn">Play Now</div>
+        </a>
+
+        <a href="pyramid.html" class="card">
+            <span class="tag tag-game">Game</span>
+            <h2>Precision Plinko</h2>
+            <p class="desc">Drop balls through a peg pyramid. Features accurate collision physics and betting mechanics.</p>
+            <div class="launch-btn">Play Now</div>
+        </a>
+
+        <a href="cat.html" class="card">
+            <span class="tag tag-game">Kids</span>
+            <h2>Kitty Follow</h2>
+            <p class="desc">A gentle, relaxing game where a cat follows a ball of yarn. Designed for toddlers.</p>
+            <div class="launch-btn">Play Now</div>
+        </a>
+
+        <a href="wavelab.html" class="card">
+            <span class="tag tag-sim">Physics</span>
+            <h2>Wave Lab</h2>
+            <p class="desc">Audio frequency synthesizer. Combine Sine, Square, and Saw waves to hear the math.</p>
+            <div class="launch-btn">Launch</div>
+        </a>
+
+        <a href="vibrations.html" class="card">
+            <span class="tag tag-sim">Physics</span>
+            <h2>Cymatics Sand</h2>
+            <p class="desc">Simulates sand on a vibrating Chladni plate. Visualize sound nodes and antinodes.</p>
+            <div class="launch-btn">Launch</div>
+        </a>
+
+        <a href="focus.html" class="card">
+            <span class="tag tag-tool">Productivity</span>
+            <h2>Focus Fractal</h2>
+            <p class="desc">A Pomodoro timer that grows a procedural tree while you study. Don't break the streak!</p>
+            <div class="launch-btn">Open Tool</div>
+        </a>
+
+        <a href="grade.html" class="card">
+            <span class="tag tag-tool">School</span>
+            <h2>Grade Forecaster</h2>
+            <p class="desc">Visual "Water Tank" grade calculator with auto-save and "What-If" sliders.</p>
+            <div class="launch-btn">Open Tool</div>
+        </a>
+
+        <a href="mathSprout.html" class="card">
+            <span class="tag tag-tool">School</span>
+            <h2>Math Cal</h2>
+            <p class="desc">A tool to help kids with math using nodes.</p>
+            <div class="launch-btn">Open Tool</div>
+        </a>
+
+    </div>
+
+</body>
+</html>
