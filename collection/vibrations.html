@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cymatics Sand Simulator</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            color: #eee;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 320px;
+            background-color: #111;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-right: 1px solid #333;
+            z-index: 10;
+        }
+
+        h2 { margin: 0 0 10px 0; color: #ffcc00; } /* Yellow for Sand theme */
+
+        .control-group { display: flex; gap: 5px; }
+
+        input[type="number"] {
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            width: 80px;
+            flex-grow: 1;
+        }
+
+        select {
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 8px 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-primary { background-color: #ffcc00; color: #000; }
+        .btn-primary:hover { background-color: #e6b800; }
+
+        .btn-danger { background-color: #ff4444; color: white; padding: 4px 8px; font-size: 12px; }
+
+        #freq-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            border-top: 1px solid #333;
+            padding-top: 10px;
+        }
+
+        .freq-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1a1a1a;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            border-left: 3px solid #555;
+        }
+
+        /* Canvas Area */
+        #canvas-container {
+            flex-grow: 1;
+            position: relative;
+            background-color: #050505;
+            display: flex;
+            flex-direction: column;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #equation-bar {
+            background-color: #111;
+            border-top: 1px solid #333;
+            padding: 10px 20px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-family: 'Courier New', monospace;
+            color: #ffcc00;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 20;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2>Cymatics Lab</h2>
+        <p style="font-size: 12px; color: #888;">Simulate vibration on a sand plate.</p>
+        
+        <div class="control-group">
+            <select id="waveType">
+                <option value="sine">Sine</option>
+                <option value="square">Square</option>
+                <option value="sawtooth">Saw</option>
+                <option value="triangle">Tri</option>
+            </select>
+            <input type="number" id="freqInput" placeholder="Hz" value="200">
+            <button class="btn-primary" id="addBtn">Add</button>
+        </div>
+
+        <div id="freq-list">
+            <div style="color: #666; font-style: italic; font-size: 14px;">No active vibrations</div>
+        </div>
+
+        <button onclick="resetParticles()" style="margin-top: auto; background: #333; color: #fff;">Reset Sand</button>
+    </div>
+
+    <div id="canvas-container">
+        <div id="overlay">
+            <h1 style="color:white">Vibration Simulator</h1>
+            <p style="color:#aaa; max-width: 400px;">
+                This simulates a "Chladni Plate".<br>
+                Sand will migrate to the "Quiet" spots (Nodes) and flee the "Loud" spots.
+            </p>
+            <br>
+            <button class="btn-primary" id="initBtn" style="font-size: 1.2rem; padding: 15px 30px;">ACTIVATE PLATE</button>
+        </div>
+        
+        <canvas id="visualizer"></canvas>
+
+        <div id="equation-bar">
+            <span>Plate V(x,y) = </span>
+            <span id="equation-text" style="color: white;">0</span>
+        </div>
+    </div>
+
+<script>
+    // --- Audio Context & State ---
+    let audioCtx;
+    let masterGain;
+    let oscillators = []; 
+    let isRunning = false;
+    let oscIdCounter = 0;
+
+    // --- Physics State ---
+    const PARTICLE_COUNT = 20000;
+    const particles = [];
+    const SCALE_FACTOR = 0.05; // Scales Audio Hz to Visual Plate Hz
+
+    // --- DOM Elements ---
+    const canvas = document.getElementById('visualizer');
+    const ctx = canvas.getContext('2d');
+    const freqInput = document.getElementById('freqInput');
+    const waveTypeInput = document.getElementById('waveType');
+    const addBtn = document.getElementById('addBtn');
+    const freqList = document.getElementById('freq-list');
+    const overlay = document.getElementById('overlay');
+    const initBtn = document.getElementById('initBtn');
+    const eqText = document.getElementById('equation-text');
+
+    // --- Resize & Init ---
+    function resize() {
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = canvas.parentElement.offsetHeight - 60;
+        resetParticles();
+    }
+    window.addEventListener('resize', resize);
+
+    // Initialize Particles scattered randomly
+    function resetParticles() {
+        particles.length = 0;
+        for(let i=0; i<PARTICLE_COUNT; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                vx: 0,
+                vy: 0
+            });
+        }
+    }
+
+    // --- Audio Logic ---
+    function initAudio() {
+        if (audioCtx) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.1; // Keep it quiet
+        masterGain.connect(audioCtx.destination);
+        
+        isRunning = true;
+        overlay.style.display = 'none';
+        resize();
+        animate();
+    }
+
+    function addFrequency(hz, type) {
+        if (!audioCtx) return;
+
+        const osc = audioCtx.createOscillator();
+        osc.type = type; 
+        osc.frequency.setValueAtTime(hz, audioCtx.currentTime);
+
+        const oscGain = audioCtx.createGain();
+        let vol = 0.3;
+        // Square/Saw are harsh, lower them
+        if (type === 'square' || type === 'sawtooth') vol = 0.15;
+        oscGain.gain.value = vol;
+
+        osc.connect(oscGain);
+        oscGain.connect(masterGain);
+        osc.start();
+
+        const id = oscIdCounter++;
+        oscillators.push({ id, osc, gain: oscGain, freq: hz, type: type });
+
+        renderList();
+        updateEquation();
+    }
+
+    function removeFrequency(id) {
+        const index = oscillators.findIndex(o => o.id === id);
+        if (index !== -1) {
+            const o = oscillators[index];
+            o.gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+            setTimeout(() => {
+                o.osc.stop(); o.osc.disconnect(); o.gain.disconnect();
+            }, 200);
+            oscillators.splice(index, 1);
+            renderList();
+            updateEquation();
+        }
+    }
+
+    // --- Math & Physics Helper ---
+
+    // Chladni 2D standing wave approximation
+    // V = Wave(x) * Wave(y)
+    function calculateVibration(x, y, freq, type, time) {
+        // Map pixel coordinates to roughly -PI to +PI space based on frequency
+        // We add time to make it "breathe" or phase shift
+        
+        const f = freq * SCALE_FACTOR; 
+        
+        // Normalize coordinates to -1 to 1 for calculation
+        const nx = (x / canvas.width) * 2 - 1; // -1 to 1
+        const ny = (y / canvas.height) * 2 - 1; // -1 to 1
+
+        let valX, valY;
+
+        // Visual Math Functions
+        if (type === 'sine') {
+            valX = Math.sin(nx * f * Math.PI + time);
+            valY = Math.sin(ny * f * Math.PI + time);
+        } else if (type === 'square') {
+            valX = Math.sign(Math.sin(nx * f * Math.PI + time));
+            valY = Math.sign(Math.sin(ny * f * Math.PI + time));
+        } else if (type === 'triangle') {
+            valX = Math.asin(Math.sin(nx * f * Math.PI + time));
+            valY = Math.asin(Math.sin(ny * f * Math.PI + time));
+        } else { // Sawtooth
+             valX = ((nx * f + time) % 1);
+             valY = ((ny * f + time) % 1);
+        }
+
+        // Chladni plates are often modeled as product of X and Y standing waves
+        // + Interference
+        return valX * valY;
+    }
+
+    function animate() {
+        if (!isRunning) return;
+        requestAnimationFrame(animate);
+
+        // Fade background slightly for trails (optional, but pure black is cleaner for sand)
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ffcc00'; // Sand Color
+
+        const time = audioCtx.currentTime;
+
+        // PHYSICS LOOP
+        for (let i = 0; i < particles.length; i++) {
+            let p = particles[i];
+            
+            // 1. Calculate Total Vibration at this particle's location
+            let totalVibration = 0;
+            
+            for (let osc of oscillators) {
+                totalVibration += calculateVibration(p.x, p.y, osc.freq, osc.type, time);
+            }
+
+            // Absolute value because vibration magnitude pushes sand regardless of direction
+            let magnitude = Math.abs(totalVibration);
+
+            // 2. Apply Force
+            // If vibration is high, particle moves randomly (bounces)
+            // If vibration is low (Node), particle stays still
+            
+            if (magnitude > 0.1) {
+                // The louder the spot, the harder the kick
+                const kick = magnitude * 100;
+                p.x += (Math.random() - 0.5) * kick;
+                p.y += (Math.random() - 0.5) * kick;
+            } else {
+                // Drift very slowly to center of node to sharpen lines
+                // (Simulates gravity/friction pulling into the trough)
+                // This is purely visual polish
+            }
+
+            // 3. Bounds Check
+            if (p.x < 0) p.x = canvas.width;
+            if (p.x > canvas.width) p.x = 0;
+            if (p.y < 0) p.y = canvas.height;
+            if (p.y > canvas.height) p.y = 0;
+
+            // 4. Draw Particle
+            ctx.fillRect(p.x, p.y, 1.5, 1.5);
+        }
+    }
+
+    // --- UI Logic ---
+    function renderList() {
+        freqList.innerHTML = '';
+        if (oscillators.length === 0) {
+            freqList.innerHTML = '<div style="color: #666; padding: 10px;">No active vibrations</div>';
+            return;
+        }
+        oscillators.forEach(o => {
+            const div = document.createElement('div');
+            div.className = 'freq-item';
+            div.style.borderLeftColor = getColor(o.type);
+            div.innerHTML = `
+                <span><span style="color:${getColor(o.type)}">${o.type}</span> ${o.freq} Hz</span>
+                <button class="btn-danger" onclick="removeFrequency(${o.id})">X</button>
+            `;
+            freqList.appendChild(div);
+        });
+    }
+
+    function updateEquation() {
+        if (oscillators.length === 0) {
+            eqText.innerText = "0";
+            return;
+        }
+        const parts = oscillators.map(o => `(${o.type}(x*${o.freq}) * ${o.type}(y*${o.freq}))`);
+        eqText.innerText = parts.join(" + ");
+    }
+
+    function getColor(type) {
+        if (type === 'sine') return '#00d2ff';
+        if (type === 'square') return '#ff00ff';
+        if (type === 'sawtooth') return '#ffae00';
+        return '#00ff00';
+    }
+
+    addBtn.addEventListener('click', () => {
+        const val = parseFloat(freqInput.value);
+        if (val) addFrequency(val, waveTypeInput.value);
+    });
+
+    initBtn.addEventListener('click', () => {
+        initAudio();
+        // Start with a cool pattern
+        addFrequency(200, 'sine');
+        addFrequency(202, 'sine'); // Adding a close frequency creates "beating" movement
+    });
+
+</script>
+</body>
+</html>
