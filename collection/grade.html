@@ -248,50 +248,55 @@
         }
         .btn-modal-confirm:hover { background: #3399cc; }
 
-        /* ... existing styles ... */
-
-    /* MOBILE RESPONSIVENESS */
-    @media (max-width: 768px) {
-        body {
-            flex-direction: column; /* Stack vertically */
-            height: 100vh; /* Keep full height */
-            overflow: hidden; /* Prevent body scroll */
-        }
-
+/* TABLET / SMALL LAPTOP MODE */
+    @media (max-width: 900px) {
+        
+        /* 1. Dynamic Sidebar Width (40%) */
         #sidebar {
-            width: 100%; /* Full width */
-            height: 50%; /* Take top half of screen */
-            border-right: none;
-            border-bottom: 1px solid #333;
-            padding: 15px; /* Less padding */
-            box-sizing: border-box; /* Ensure padding doesn't break width */
+            width: 40%;           
+            min-width: 200px;     
+            max-width: 400px;     
+            padding: 15px;       
+            box-sizing: border-box; /* Ensures padding fits inside the 40% */
         }
 
+        /* 2. Stack the input boxes to fit the narrower sidebar */
+        #sidebar .row {
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        /* 3. CANVAS OVERFLOW FIX */
+        /* This forces the canvas to shrink into the remaining 60% space */
         #main-area {
-            width: 100%;
-            height: 50%; /* Take bottom half */
+            flex: 1;              
+            overflow: hidden;     /* Critical: Chops off excess canvas */
+            width: 0;             /* Critical: Forces flex calculation to shrink child */
         }
 
-        #slider-panel {
-            height: 80px; /* Compact slider area */
-            padding: 0 15px;
+        #canvas-container {
+            overflow: hidden;     
         }
 
-        h2 {
-            font-size: 1.2rem;
-        }
-
-        /* Adjust Modal to fit small screens */
-        .modal-box {
-            width: 85%; 
+        /* 4. Compact UI Elements */
+        .grade-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
         }
         
-        /* Make inputs simpler to tap */
+        .btn-remove {
+            width: 100%;
+        }
+
+        h2 { font-size: 1.1rem; }
+        
         input[type="text"], input[type="number"] {
-            font-size: 16px; /* Prevents zoom on iOS */
-            padding: 10px;
+            font-size: 13px;
+            padding: 8px;
         }
     }
+   
 
     </style>
 </head>
@@ -311,7 +316,7 @@
     <div id="sidebar">
         <h2>Grade Forecaster</h2>
         <div style="font-size: 12px; color: #666; margin-bottom: 10px;">Changes save automatically</div>
-        
+
         <div class="mode-switch">
             <div class="mode-option active" id="modeWeighted" onclick="userSwitchMode('weighted')">Weighted %</div>
             <div class="mode-option" id="modePoints" onclick="userSwitchMode('points')">Total Points</div>
