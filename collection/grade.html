@@ -273,7 +273,7 @@
 
         /* 3. Stack Inputs Vertically */
         #sidebar .row {
-            flex-direction: column; 
+            flex-direction: column;
             gap: 2px;
         }
 
@@ -320,7 +320,7 @@
             padding: 0 5px;
         }
         .sim-score { font-size: 12px; margin-bottom: 2px; }
-        
+
         /* Mode Switcher Compact */
         .mode-switch { padding: 2px; margin-bottom: 5px; }
         .mode-option { padding: 4px; font-size: 10px; }
@@ -573,103 +573,128 @@
     // --- Rendering ---
 
     function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        const w = canvas.width;
-        const h = canvas.height;
-        const centerX = w / 2;
-        
-        let simFinal = parseFloat(slider.value);
-        
-        if (mode === 'points') {
-            const fMax = parseFloat(finalInput.value) || 100;
-            slider.max = fMax;
-            sMax.innerText = fMax;
-            sMid.innerText = (fMax / 2).toFixed(0);
-        } else {
-            slider.max = 100;
-            sMax.innerText = "100";
-            sMid.innerText = "50";
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const w = canvas.width;
+            const h = canvas.height;
+            const centerX = w / 2;
+            
+            // --- SMART SCALING LOGIC ---
+            // Check if we are on a narrow screen (Phone Mode)
+            const isMobile = w < 500; 
+
+            // Adjust sizes based on screen width
+            const tankW = isMobile ? w * 0.6 : 200;  // Mobile: Tank is 60% of width. Desktop: Fixed 200px.
+            const tankH = h * 0.6;
+            const tankX = centerX - tankW/2;
+            const tankY = h * 0.2;
+            
+            const fontBig = isMobile ? "bold 40px Arial" : "bold 80px Arial";
+            const fontHuge = isMobile ? "bold 60px Arial" : "bold 120px Arial";
+            const fontSmall = isMobile ? "10px Arial" : "14px Arial";
+            // ---------------------------
+
+            let simFinal = parseFloat(slider.value);
+            
+            if (mode === 'points') {
+                const fMax = parseFloat(finalInput.value) || 100;
+                slider.max = fMax;
+                sMax.innerText = fMax;
+                sMid.innerText = (fMax / 2).toFixed(0);
+            } else {
+                slider.max = 100;
+                sMax.innerText = "100";
+                sMid.innerText = "50";
+            }
+
+            const finalGrade = calculateGrade(simFinal);
+
+            // 1. Draw Grade Lines (Background)
+            // We pass 'isMobile' so we can hide the text labels if it's too cramped
+            drawGradeLine(90, "A", tankX, tankY, tankW, tankH, isMobile);
+            drawGradeLine(80, "B", tankX, tankY, tankW, tankH, isMobile);
+            drawGradeLine(70, "C", tankX, tankY, tankW, tankH, isMobile);
+            drawGradeLine(60, "D", tankX, tankY, tankW, tankH, isMobile);
+
+            // 2. Draw Tank Border
+            ctx.strokeStyle = "#555";
+            ctx.lineWidth = isMobile ? 2 : 4; // Thinner lines on mobile
+            ctx.strokeRect(tankX, tankY, tankW, tankH);
+
+            // 3. Draw Liquid
+            const fillHeight = Math.max(0, Math.min(tankH, (finalGrade / 100) * tankH));
+            
+            let color = "#ff4444"; 
+            if (finalGrade >= 60) color = "#ffae00"; 
+            if (finalGrade >= 70) color = "#ffff00"; 
+            if (finalGrade >= 80) color = "#4db8ff"; 
+            if (finalGrade >= 90) color = "#44ff44"; 
+
+            ctx.fillStyle = color;
+            // Adjust liquid margin slightly
+            const gap = isMobile ? 1 : 2;
+            ctx.fillRect(tankX + gap, tankY + tankH - fillHeight, tankW - (gap*2), fillHeight);
+
+            // 4. Draw Score Text
+            ctx.fillStyle = "#fff";
+            ctx.font = fontBig; // Uses the dynamic size
+            ctx.textAlign = "center";
+            // Position text closer to tank on mobile
+            ctx.fillText(finalGrade.toFixed(1) + "%", centerX, tankY - (isMobile ? 15 : 30));
+
+            // 5. Draw Background Letter
+            let letter = "F";
+            if (finalGrade >= 60) letter = "D";
+            if (finalGrade >= 70) letter = "C";
+            if (finalGrade >= 80) letter = "B";
+            if (finalGrade >= 90) letter = "A";
+
+            ctx.font = fontHuge; // Uses the dynamic size
+            ctx.globalAlpha = 0.1;
+            ctx.fillText(letter, centerX, tankY + tankH / 2 + (isMobile ? 20 : 40));
+            ctx.globalAlpha = 1.0;
+
+            // 6. Info Text (Bottom)
+            ctx.fillStyle = "#666";
+            ctx.font = fontSmall;
+            if (mode === 'weighted') {
+                let currentWeight = 0;
+                components.forEach(c => currentWeight += c.valB);
+                currentWeight += parseFloat(finalInput.value) || 0;
+                ctx.fillText(`Total Weight: ${currentWeight}%`, centerX, h - (isMobile ? 10 : 20));
+            } else {
+                let totalPts = 0;
+                components.forEach(c => totalPts += c.valB);
+                totalPts += parseFloat(finalInput.value) || 0;
+                ctx.fillText(`Total Course Points: ${totalPts}`, centerX, h - (isMobile ? 10 : 20));
+            }
         }
 
-        const finalGrade = calculateGrade(simFinal);
-
-        // Tank
-        const tankW = 200;
-        const tankH = h * 0.6;
-        const tankX = centerX - tankW/2;
-        const tankY = h * 0.2;
-
-        drawGradeLine(90, "A", tankX, tankY, tankW, tankH);
-        drawGradeLine(80, "B", tankX, tankY, tankW, tankH);
-        drawGradeLine(70, "C", tankX, tankY, tankW, tankH);
-        drawGradeLine(60, "D", tankX, tankY, tankW, tankH);
-
-        ctx.strokeStyle = "#555";
-        ctx.lineWidth = 4;
-        ctx.strokeRect(tankX, tankY, tankW, tankH);
-
-        // Liquid
-        const fillHeight = Math.max(0, Math.min(tankH, (finalGrade / 100) * tankH));
-        
-        let color = "#ff4444"; 
-        if (finalGrade >= 60) color = "#ffae00"; 
-        if (finalGrade >= 70) color = "#ffff00"; 
-        if (finalGrade >= 80) color = "#4db8ff"; 
-        if (finalGrade >= 90) color = "#44ff44"; 
-
-        ctx.fillStyle = color;
-        ctx.fillRect(tankX + 2, tankY + tankH - fillHeight, tankW - 4, fillHeight);
-
-        // Text
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 80px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText(finalGrade.toFixed(1) + "%", centerX, tankY - 30);
-
-        let letter = "F";
-        if (finalGrade >= 60) letter = "D";
-        if (finalGrade >= 70) letter = "C";
-        if (finalGrade >= 80) letter = "B";
-        if (finalGrade >= 90) letter = "A";
-
-        ctx.font = "bold 120px Arial";
-        ctx.globalAlpha = 0.1;
-        ctx.fillText(letter, centerX, tankY + tankH / 2 + 40);
-        ctx.globalAlpha = 1.0;
-
-        // Info
-        ctx.fillStyle = "#666";
-        ctx.font = "14px Arial";
-        if (mode === 'weighted') {
-            let currentWeight = 0;
-            components.forEach(c => currentWeight += c.valB);
-            currentWeight += parseFloat(finalInput.value) || 0;
-            ctx.fillText(`Total Weight: ${currentWeight}%`, centerX, h - 20);
-        } else {
-            let totalPts = 0;
-            components.forEach(c => totalPts += c.valB);
-            totalPts += parseFloat(finalInput.value) || 0;
-            ctx.fillText(`Total Course Points: ${totalPts}`, centerX, h - 20);
-        }
-    }
-
-    function drawGradeLine(score, label, x, y, w, h) {
+    // Updated Helper to handle small screens
+    function drawGradeLine(score, label, x, y, w, h, isMobile) {
         const yPos = y + h - (score / 100 * h);
         ctx.beginPath();
-        ctx.moveTo(x - 20, yPos);
-        ctx.lineTo(x + w + 20, yPos);
+        
+        // On mobile, extend lines slightly less
+        const ext = isMobile ? 5 : 20;
+        
+        ctx.moveTo(x - ext, yPos);
+        ctx.lineTo(x + w + ext, yPos);
         ctx.strokeStyle = "#333";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = isMobile ? 1 : 2;
         ctx.setLineDash([5, 5]);
         ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = "#888";
-        ctx.font = "bold 14px Arial";
-        ctx.textAlign = "right";
-        ctx.fillText(score + "% (" + label + ")", x - 25, yPos + 5);
+        
+        // Only draw the "90% (A)" labels if we aren't on mobile
+        // On narrow screens, these clutter the view
+        if (!isMobile) {
+            ctx.fillStyle = "#888";
+            ctx.font = "bold 14px Arial";
+            ctx.textAlign = "right";
+            ctx.fillText(score + "% (" + label + ")", x - 25, yPos + 5);
+        }
     }
-
     // --- UI Lists ---
 
     function renderList() {
