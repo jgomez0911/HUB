@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Hole</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            color: #eee;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        /* --- LEFT SIDEBAR (Controls) --- */
+        #sidebar {
+            width: 280px;
+            background-color: rgba(5, 5, 8, 0.85); /* Darker sidebar */
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #223;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        h2 { margin: 0; color: #c64; text-align: center; text-transform: uppercase; letter-spacing: 2px; font-weight: 300; }
+        p.hint { font-size: 12px; color: #667; text-align: center; margin: 0; }
+
+        .control-group {
+            background: rgba(20, 20, 30, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #223;
+        }
+
+        label { font-size: 13px; color: #889; display: flex; justify-content: space-between; margin-bottom: 8px;}
+        span.val { color: #fff; font-weight: bold; }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #c64;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        button {
+            padding: 15px;
+            background: rgba(40, 20, 10, 0.4);
+            color: #cb9;
+            border: 1px solid #842;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        button:hover { background: #842; color: #fff; }
+
+        /* --- RIGHT CANVAS AREA --- */
+        #main-area {
+            flex-grow: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #020205 0%, #000 100%);
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* --- MOBILE LAYOUT --- */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            #main-area { order: 1; height: 60dvh; border-bottom: 1px solid #222; }
+            #sidebar {
+                order: 2; width: 100%; height: 40dvh; border-right: none; padding: 15px;
+                flex-direction: row; flex-wrap: wrap; align-content: flex-start; gap: 10px; overflow-y: auto;
+            }
+            h2, p.hint { display: none; }
+            .control-group { flex: 1 1 45%; height: 60px; justify-content: center; }
+            button { width: 100%; padding: 10px; margin-top: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2>Gargantua</h2>
+        <p class="hint">Tap to feed the void</p>
+
+        <div class="control-group">
+            <label>Mass: <span id="valMass" class="val">1500</span></label>
+            <input type="range" id="inMass" min="500" max="3000" step="100" value="1500">
+        </div>
+
+        <div class="control-group">
+            <label>Speed: <span id="valSpeed" class="val">8</span></label>
+            <input type="range" id="inSpeed" min="2" max="20" step="1" value="8">
+        </div>
+
+        <button onclick="clearSpace()">Clear Space</button>
+    </div>
+
+    <div id="main-area">
+        <canvas id="spaceCanvas"></canvas>
+    </div>
+
+<script>
+    const canvas = document.getElementById('spaceCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const inMass = document.getElementById('inMass');
+    const inSpeed = document.getElementById('inSpeed');
+    const valMass = document.getElementById('valMass');
+    const valSpeed = document.getElementById('valSpeed');
+
+    inMass.oninput = () => valMass.innerText = inMass.value;
+    inSpeed.oninput = () => valSpeed.innerText = inSpeed.value;
+    
+    // Black Hole State
+    let blackHole = { x: 0, y: 0, mass: 1500 };
+    let time = 0; // Used for drifting movement
+    
+    // Color State (HSL)
+    let baseHue = 30;    // Standard Orange/Gold
+    let currentHue = 30; // The actual color being drawn
+    let hueIntensity = 0; // How much "extra" color we have absorbed (0 to 1)
+
+    let objects = [];
+    let particles = [];
+
+    function resize() {
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = canvas.parentElement.offsetHeight;
+        // Reset position to center on resize
+        blackHole.x = canvas.width / 2;
+        blackHole.y = canvas.height / 2;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- PHYSICS CLASSES ---
+
+    class SpaceObject {
+        constructor(x, y, vx, vy) {
+            this.x = x;
+            this.y = y;
+            this.vx = vx;
+            this.vy = vy;
+            this.radius = 3 + Math.random() * 3;
+            // Store Hue separately so we can feed it to the black hole
+            this.hue = Math.floor(Math.random() * 360);
+            this.color = `hsl(${this.hue}, 100%, 70%)`;
+            this.history = []; 
+            this.isDead = false;
+        }
+
+        update(holeRadius) {
+            const dx = blackHole.x - this.x;
+            const dy = blackHole.y - this.y;
+            const distSq = dx*dx + dy*dy;
+            const dist = Math.sqrt(distSq);
+
+            blackHole.mass = parseInt(inMass.value);
+
+            // Gravity Force
+            const force = blackHole.mass / Math.max(distSq, 50); 
+
+            const angle = Math.atan2(dy, dx);
+            this.vx += Math.cos(angle) * force;
+            this.vy += Math.sin(angle) * force;
+
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Trails
+            this.history.push({x: this.x, y: this.y});
+            if(this.history.length > 25) this.history.shift();
+
+            const horizon = holeRadius * 0.9; // Absorb slightly inside the visual radius
+
+            if (dist < horizon) {
+                this.isDead = true;
+                // 1. Create Particles
+                createDestructionEffect(this.x, this.y, this.color, this.vx, this.vy);
+                
+                // 2. ABSORB COLOR: 
+                // Set the black hole's current hue to this object's hue
+                currentHue = this.hue;
+                hueIntensity = 1.0; // Max intensity
+            }
+
+            this.stretch = Math.max(1, 5000 / distSq); 
+            this.stretchAngle = angle;
+        }
+
+        draw() {
+            // Draw Trail
+            ctx.beginPath();
+            ctx.strokeStyle = this.color;
+            ctx.globalAlpha = 0.4;
+            ctx.lineWidth = 1.5;
+            for(let i=0; i<this.history.length-1; i++){
+                ctx.moveTo(this.history[i].x, this.history[i].y);
+                ctx.lineTo(this.history[i+1].x, this.history[i+1].y);
+            }
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+
+            // Draw Object
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.stretchAngle);
+            ctx.scale(this.stretch, 1/this.stretch);
+            
+            ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2); ctx.fill();
+
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = this.color;
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); ctx.arc(0, 0, this.radius * 0.7, 0, Math.PI*2); ctx.fill();
+
+            ctx.restore();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    class Debris {
+        constructor(x, y, color, vx, vy) {
+            this.x = x;
+            this.y = y;
+            this.vx = vx + (Math.random() - 0.5) * 4;
+            this.vy = vy + (Math.random() - 0.5) * 4;
+            this.life = 1.0;
+            this.color = color;
+            this.size = 1 + Math.random() * 2;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.life -= 0.04;
+        }
+        draw() {
+            ctx.globalAlpha = this.life;
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    function createDestructionEffect(x, y, color, vx, vy) {
+        for(let i=0; i<8; i++) {
+            particles.push(new Debris(x, y, color, vx, vy));
+        }
+    }
+
+    function clearSpace() {
+        objects = [];
+        particles = [];
+    }
+
+    // --- VISUALS ---
+
+    function drawInterstellarHole(x, y, mass) {
+        const baseRadius = 25 + (mass / 100);
+        
+        // COLOR MIXING LOGIC
+        // We blend the Base Hue (30) with the Current Hue based on hueIntensity
+        // Since doing true color mixing in HSL is hard, we'll just snap to Current Hue
+        // but modulate the Saturation/Lightness based on intensity.
+        
+        // As intensity fades, we drift back to base settings
+        if (hueIntensity > 0.01) {
+            hueIntensity -= 0.01; // Fade out speed
+        } else {
+            currentHue = baseHue; // Snap back to orange when fade completes
+        }
+
+        // Construct CSS colors
+        // Primary Glow: uses currentHue
+        const glowColor = `hsla(${currentHue}, 100%, 60%, 0.5)`;
+        const deepGlow = `hsla(${currentHue}, 100%, 40%, 0.4)`;
+        const haloColorStart = `hsla(${currentHue}, 80%, 70%, 0.1)`; 
+
+        // 1. Outer Lensing Halo (Dimmed)
+        const haloRad = baseRadius * 6;
+        const haloGrad = ctx.createRadialGradient(x, y, baseRadius * 1.2, x, y, haloRad);
+        haloGrad.addColorStop(0, haloColorStart); 
+        haloGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = haloGrad;
+        ctx.beginPath(); ctx.arc(x, y, haloRad, 0, Math.PI*2); ctx.fill();
+
+        // 2. The Accretion Disk
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter'; 
+        
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = glowColor;
+        
+        // Main Disk (Dimmed Opacity)
+        ctx.fillStyle = `hsla(${currentHue}, 50%, 80%, 0.3)`; // Lower opacity white
+        ctx.beginPath();
+        // Rotate disk slowly over time
+        ctx.ellipse(x, y, baseRadius * 3.5, baseRadius * 0.9, (Math.PI / 8) + (time * 0.05), 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Secondary Disk (Warmer, Dimmed)
+        ctx.shadowColor = deepGlow;
+        ctx.fillStyle = `hsla(${currentHue}, 80%, 40%, 0.2)`;
+        ctx.beginPath();
+        ctx.ellipse(x, y, baseRadius * 3.8, baseRadius * 1.2, (Math.PI / 8) + (time * 0.05), 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore(); 
+
+        // 3. Event Horizon
+        ctx.fillStyle = "#000";
+        ctx.beginPath(); ctx.arc(x, y, baseRadius, 0, Math.PI*2); ctx.fill();
+
+        // 4. Photon Ring (Dimmed)
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = glowColor;
+        ctx.strokeStyle = `hsla(${currentHue}, 100%, 90%, 0.6)`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(x, y, baseRadius, 0, Math.PI*2); ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        return baseRadius; 
+    }
+
+    // --- MAIN LOOP ---
+
+    function animate() {
+        // Darker trails for more contrast
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // MOVEMENT LOGIC
+        time += 0.01;
+        // Figure-8 Drift Pattern
+        // Move around center +/- 100px
+        const driftX = Math.sin(time) * 100;
+        const driftY = Math.sin(time * 2) * 50;
+        
+        blackHole.x = (canvas.width / 2) + driftX;
+        blackHole.y = (canvas.height / 2) + driftY;
+
+        const massVal = parseInt(inMass.value);
+        const visualRadius = drawInterstellarHole(blackHole.x, blackHole.y, massVal);
+
+        // Objects
+        for (let i = objects.length - 1; i >= 0; i--) {
+            objects[i].update(visualRadius);
+            objects[i].draw();
+            if (objects[i].isDead) objects.splice(i, 1);
+        }
+
+        // Debris
+        for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].update();
+            particles[i].draw();
+            if (particles[i].life <= 0) particles.splice(i, 1);
+        }
+
+        requestAnimationFrame(animate);
+    }
+    animate();
+
+    // --- INPUTS ---
+    function launch(x, y) {
+        const spawnSide = Math.floor(Math.random() * 4);
+        let startX, startY;
+        if(spawnSide === 0) { startX = Math.random()*canvas.width; startY = -20; } 
+        else if(spawnSide === 1) { startX = canvas.width+20; startY = Math.random()*canvas.height; } 
+        else if(spawnSide === 2) { startX = Math.random()*canvas.width; startY = canvas.height+20; } 
+        else { startX = -20; startY = Math.random()*canvas.height; } 
+
+        const dx = x - startX;
+        const dy = y - startY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        const speed = parseInt(inSpeed.value) * (1 + Math.random()*0.5); 
+        const vx = (dx / dist) * speed;
+        const vy = (dy / dist) * speed;
+
+        objects.push(new SpaceObject(startX, startY, vx, vy));
+    }
+
+    canvas.addEventListener('mousedown', e => {
+        const r = canvas.getBoundingClientRect();
+        launch(e.clientX - r.left, e.clientY - r.top);
+    });
+
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const r = canvas.getBoundingClientRect();
+        const t = e.touches[0];
+        launch(t.clientX - r.left, t.clientY - r.top);
+    }, {passive: false});
+
+</script>
+</body>
+</html>

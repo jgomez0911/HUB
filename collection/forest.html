@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forest Generator (Fractal Style)</title>
+    <style>
+        /* --- GLOBAL STYLES --- */
+        body {
+            margin: 0;
+            background-color: #111; /* Dark Night Sky */
+            color: #eee;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        /* --- LEFT SIDEBAR (Controls) --- */
+        #sidebar {
+            width: 300px;
+            background-color: #1a1a1a;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border-right: 1px solid #333;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        h2 { margin: 0; color: #ff66aa; text-align: center; font-weight: 300; }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: #222;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        label { font-size: 14px; color: #aaa; display: flex; justify-content: space-between; }
+        span.val { color: #fff; font-weight: bold; }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: #ff66aa;
+        }
+
+        button {
+            padding: 15px;
+            font-size: 16px;
+            background: #ff66aa;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+            margin-top: auto; 
+        }
+        button:hover { background: #ff88cc; }
+        button:active { transform: translateY(1px); }
+
+        /* --- RIGHT CANVAS AREA --- */
+        #main-area {
+            flex-grow: 1;
+            position: relative;
+            background: linear-gradient(to bottom, #1a0b1a 0%, #111 100%);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- MOBILE LAYOUT --- */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            #main-area { order: 1; height: 65dvh; }
+            #sidebar {
+                order: 2;
+                width: 100%;
+                height: 35dvh;
+                border-right: none;
+                border-top: 1px solid #333;
+                padding: 15px;
+                flex-direction: row; 
+                flex-wrap: wrap;
+                align-content: flex-start;
+            }
+            h2 { display: none; } 
+            .control-group { flex: 1 1 45%; height: 60px; justify-content: center; }
+            button { width: 100%; margin-top: 5px; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2>Fractal Forest</h2>
+
+        <div class="control-group">
+            <label>Trees: <span id="valTree" class="val">3</span></label>
+            <input type="range" id="inTree" min="1" max="10" value="3">
+        </div>
+
+        <div class="control-group">
+            <label>Bushes: <span id="valBush" class="val">5</span></label>
+            <input type="range" id="inBush" min="0" max="15" value="5">
+        </div>
+
+        <div class="control-group">
+            <label>Wind Strength: <span id="valWind" class="val">Off</span></label>
+            <input type="range" id="inWind" min="0" max="10" value="0">
+        </div>
+
+        <button onclick="generateForest()">Grow Forest</button>
+    </div>
+
+    <div id="main-area">
+        <canvas id="forestCanvas"></canvas>
+    </div>
+
+<script>
+    const canvas = document.getElementById('forestCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // UI Elements
+    const inTree = document.getElementById('inTree');
+    const inBush = document.getElementById('inBush');
+    const inWind = document.getElementById('inWind');
+    
+    // Update labels live
+    inTree.oninput = () => document.getElementById('valTree').innerText = inTree.value;
+    inBush.oninput = () => document.getElementById('valBush').innerText = inBush.value;
+    inWind.oninput = () => document.getElementById('valWind').innerText = inWind.value == 0 ? "Off" : inWind.value;
+
+    // State
+    let plants = [];
+    let animationFrame;
+    let growthProgress = 0;
+    let windTime = 0;
+
+    // Resize Handling
+    function resize() {
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = canvas.parentElement.offsetHeight;
+        if(plants.length > 0) drawFrame(); 
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- PLANT CLASSES ---
+
+    class Plant {
+        constructor(type, xPos) {
+            this.type = type; // 'tree' or 'bush'
+            this.x = xPos;
+            this.y = canvas.height; 
+            
+            // EXACT FRACTAL SETTINGS (No Randomness)
+            if (type === 'tree') {
+                this.scale = 1.0;          // Fixed Size
+                this.color = "#fff";       // White/Grey Trunk
+                this.leafColor = "#ff66aa"; // Pink Blossoms
+                this.maxDepth = 10;        // High Detail
+                this.branchWidth = 10;
+                this.len = 120;
+                this.spread = Math.PI / 4; // 45 degrees exact
+            } else {
+                this.scale = 0.4;          // Fixed Small Size
+                this.color = "#aaa";       // Grey Trunk
+                this.leafColor = "#44ffaa"; // Green Leaves
+                this.maxDepth = 6;         // Lower Detail
+                this.branchWidth = 6;
+                this.len = 80;
+                this.spread = Math.PI / 3; // Wider 60 degrees spread
+            }
+        }
+    }
+
+    // --- GENERATION ---
+
+    function generateForest() {
+        plants = [];
+        growthProgress = 0;
+        
+        const treeCount = parseInt(inTree.value);
+        const bushCount = parseInt(inBush.value);
+
+        // Calculate spacing to avoid perfect stacking, but keep sizes uniform
+        // We will just place them randomly on X, but their biology is identical.
+        
+        // 1. Add Trees
+        for(let i=0; i<treeCount; i++) {
+            plants.push(new Plant('tree', Math.random() * canvas.width));
+        }
+        
+        // 2. Add Bushes
+        for(let i=0; i<bushCount; i++) {
+            plants.push(new Plant('bush', Math.random() * canvas.width));
+        }
+
+        // Sort so smaller items (bushes) generally appear in front if desired, 
+        // or just sort by Y if we had depth. Here we just let them overlap.
+        
+        // Start Animation Loop
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+        animate();
+    }
+
+    // --- ANIMATION LOOP ---
+
+    function animate() {
+        drawFrame();
+        animationFrame = requestAnimationFrame(animate);
+    }
+
+    function drawFrame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 1. Draw Moon
+        ctx.fillStyle = "#fff";
+        ctx.shadowBlur = 40;
+        ctx.shadowColor = "#ffccff";
+        ctx.beginPath();
+        ctx.arc(canvas.width * 0.5, canvas.height * 0.2, 40, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // 2. Draw Ground
+        ctx.fillStyle = "#111";
+        ctx.fillRect(0, canvas.height - 10, canvas.width, 10);
+
+        // 3. Update Physics
+        if (growthProgress < 1) {
+            growthProgress += 0.008; // Smooth growth
+        }
+        
+        windTime += parseFloat(inWind.value) * 0.02; 
+
+        // 4. Draw All Plants
+        plants.forEach(plant => {
+            ctx.save();
+            ctx.translate(plant.x, plant.y);
+            
+            ctx.strokeStyle = plant.color;
+            ctx.lineWidth = plant.branchWidth;
+            ctx.lineCap = "round";
+            ctx.shadowBlur = 0;
+
+            drawBranch(0, 0, plant.len * plant.scale * growthProgress, 0, plant.maxDepth, plant);
+            
+            ctx.restore();
+        });
+    }
+
+    // --- RECURSIVE FRACTAL LOGIC (Standard) ---
+
+    function drawBranch(x, y, len, angle, depth, plant) {
+        ctx.save();
+        ctx.translate(x, y);
+        
+        // WIND LOGIC: Only affects rotation
+        // Deeper branches sway more
+        const windForce = parseFloat(inWind.value) * 0.002;
+        const sway = Math.sin(windTime + depth) * windForce * (plant.maxDepth - depth);
+        
+        ctx.rotate(angle + sway);
+
+        // Draw Line
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -len);
+        ctx.stroke();
+
+        // Recursion
+        if (depth > 0) {
+            ctx.translate(0, -len);
+            
+            // Shrink width
+            ctx.lineWidth *= 0.7;
+
+            // Reduce Length (Classic Fractal Ratio is usually 0.67 or 0.7)
+            const newLen = len * 0.7; 
+
+            // Right
+            drawBranch(0, 0, newLen, plant.spread, depth - 1, plant);
+            // Left
+            drawBranch(0, 0, newLen, -plant.spread, depth - 1, plant);
+        } else {
+            // DRAW LEAVES (at the very tips)
+            // Only draw if fully grown to avoid popping
+            if (growthProgress > 0.5) {
+                ctx.fillStyle = plant.leafColor;
+                ctx.shadowBlur = 10; // Glow effect
+                ctx.shadowColor = plant.leafColor;
+                
+                ctx.beginPath();
+                // Circle leaf
+                ctx.arc(0, -len, 5 * plant.scale, 0, Math.PI*2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        }
+        ctx.restore();
+    }
+
+    // Start
+    generateForest();
+
+</script>
+</body>
+</html>

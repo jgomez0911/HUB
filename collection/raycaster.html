@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Retro Raycaster</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #111;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden; /* Prevent scroll on mobile */
+            touch-action: none; /* Prevent zoom/scroll gestures */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 800px; /* Max desktop width */
+            background: #000;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated; /* Keeps the retro chunky look */
+        }
+
+        /* --- UI OVERLAY --- */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Let clicks pass through to controls */
+        }
+
+        #minimap {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            border: 2px solid #444;
+            background: rgba(0, 0, 0, 0.7);
+            box-shadow: 0 0 10px #000;
+        }
+
+        #debug-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            text-align: right;
+            font-size: 12px;
+            color: #0f0;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        /* --- MOBILE CONTROLS --- */
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            pointer-events: auto;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .d-pad {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .btn {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(2px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            user-select: none;
+        }
+        .btn:active { background: rgba(0, 255, 0, 0.3); border-color: #0f0; }
+
+        /* Left D-Pad (Movement) */
+        #btn-up { top: 0; left: 40px; width: 40px; height: 40px; }
+        #btn-down { bottom: 0; left: 40px; width: 40px; height: 40px; }
+        #btn-left { top: 40px; left: 0; width: 40px; height: 40px; }
+        #btn-right { top: 40px; right: 0; width: 40px; height: 40px; }
+
+        /* Right Actions (Optional strafe or just visual balance) */
+        .action-pad {
+            width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+        }
+
+        @media (min-width: 769px) {
+            #controls { display: none; } /* Hide touch controls on desktop */
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="screen"></canvas>
+    
+    <div id="ui-layer">
+        <canvas id="minimap" width="150" height="150"></canvas>
+        <div id="debug-info">
+            RAYCASTER v1.0<br>
+            [ARROWS] to Move
+        </div>
+    </div>
+
+    <div id="controls">
+        <div class="d-pad">
+            <div class="btn" id="btn-up">▲</div>
+            <div class="btn" id="btn-left">◀</div>
+            <div class="btn" id="btn-right">▶</div>
+            <div class="btn" id="btn-down">▼</div>
+        </div>
+        <div class="action-pad">
+            USE D-PAD<br>TO MOVE
+        </div>
+    </div>
+</div>
+
+<script>
+    /* --- CONFIGURATION --- */
+    const SCREEN_WIDTH = 320;  // Low res for retro feel & performance
+    const SCREEN_HEIGHT = 200; 
+    const TICK_RATE = 30;
+    
+    const FOV = 60 * (Math.PI / 180);
+    const BLOCK_SIZE = 64;
+    const MAP_SIZE = 16;       // 16x16 grid
+    const SPEED = 4;
+    const ROT_SPEED = 0.08;
+
+    /* --- THE MAP (1 = Wall, 0 = Empty) --- */
+    const map = [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+        [1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+        [1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1],
+        [1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1],
+        [1,0,1,0,0,0,0,1,1,1,1,1,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,1,1,0,0,0,1,1,1,0,0,0,1,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    ];
+
+    /* --- STATE --- */
+    const player = {
+        x: BLOCK_SIZE * 2.5,
+        y: BLOCK_SIZE * 2.5,
+        dir: 0, // Angle in radians
+        speed: 0,
+        rot: 0
+    };
+
+    const keys = {
+        up: false, down: false, left: false, right: false
+    };
+
+    /* --- SETUP --- */
+    const canvas = document.getElementById('screen');
+    const ctx = canvas.getContext('2d');
+    
+    // Scale canvas CSS to fit window, but keep internal resolution low
+    canvas.width = SCREEN_WIDTH;
+    canvas.height = SCREEN_HEIGHT;
+
+    const miniCanvas = document.getElementById('minimap');
+    const miniCtx = miniCanvas.getContext('2d');
+    const MINI_SCALE = 0.15; // Scale down map for UI
+
+    /* --- INPUT HANDLING --- */
+    document.addEventListener('keydown', (e) => {
+        if(e.code === 'ArrowUp' || e.code === 'KeyW') keys.up = true;
+        if(e.code === 'ArrowDown' || e.code === 'KeyS') keys.down = true;
+        if(e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+        if(e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+    });
+    
+    document.addEventListener('keyup', (e) => {
+        if(e.code === 'ArrowUp' || e.code === 'KeyW') keys.up = false;
+        if(e.code === 'ArrowDown' || e.code === 'KeyS') keys.down = false;
+        if(e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+        if(e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+    });
+
+    // Touch Controls
+    const bindTouch = (id, key) => {
+        const btn = document.getElementById(id);
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; });
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+    };
+    bindTouch('btn-up', 'up');
+    bindTouch('btn-down', 'down');
+    bindTouch('btn-left', 'left');
+    bindTouch('btn-right', 'right');
+
+    /* --- CORE LOGIC --- */
+
+    function hasWallAt(x, y) {
+        if (x < 0 || x >= MAP_SIZE * BLOCK_SIZE || y < 0 || y >= MAP_SIZE * BLOCK_SIZE) {
+            return true;
+        }
+        const mapX = Math.floor(x / BLOCK_SIZE);
+        const mapY = Math.floor(y / BLOCK_SIZE);
+        return map[mapY][mapX] === 1;
+    }
+
+    function movePlayer() {
+        // Rotation
+        if (keys.left) player.dir -= ROT_SPEED;
+        if (keys.right) player.dir += ROT_SPEED;
+
+        // Movement
+        let moveStep = 0;
+        if (keys.up) moveStep = SPEED;
+        if (keys.down) moveStep = -SPEED;
+
+        if (moveStep !== 0) {
+            const newX = player.x + Math.cos(player.dir) * moveStep;
+            const newY = player.y + Math.sin(player.dir) * moveStep;
+
+            // Simple Collision Detection (checking corners would be better, but center point is okay for demo)
+            if (!hasWallAt(newX, player.y)) player.x = newX;
+            if (!hasWallAt(player.x, newY)) player.y = newY;
+        }
+    }
+
+    function castRays() {
+        // Draw Ceiling and Floor
+        ctx.fillStyle = "#333"; // Ceiling
+        ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT / 2);
+        ctx.fillStyle = "#222"; // Floor
+        ctx.fillRect(0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2);
+
+        // Raycasting Loop
+        let startAngle = player.dir - FOV / 2;
+        
+        for (let strip = 0; strip < SCREEN_WIDTH; strip++) {
+            let rayAngle = startAngle + (strip / SCREEN_WIDTH) * FOV;
+            
+            // Normalize distance calculation
+            let stepSize = 2; // Step 2 pixels at a time (Performance vs Accuracy tradeoff)
+            let dist = 0;
+            let wallHit = false;
+            
+            let rayX = player.x;
+            let rayY = player.y;
+            
+            let cos = Math.cos(rayAngle);
+            let sin = Math.sin(rayAngle);
+
+            // "March" the ray forward
+            while (!wallHit && dist < 600) { // Max render distance
+                rayX += cos * stepSize;
+                rayY += sin * stepSize;
+                dist += stepSize;
+                
+                if (hasWallAt(rayX, rayY)) {
+                    wallHit = true;
+                }
+            }
+
+            if (wallHit) {
+                // Fix Fisheye Effect
+                let correctDist = dist * Math.cos(rayAngle - player.dir);
+                
+                // Calculate Wall Height
+                let wallHeight = (BLOCK_SIZE / correctDist) * 277; // 277 is a "projection plane" constant
+                
+                // Color Shading (Fake Lighting)
+                // Further walls are darker
+                let brightness = Math.max(50, 255 - (correctDist * 0.5));
+                ctx.fillStyle = `rgb(0, ${brightness}, ${brightness * 0.8})`; // Matrix-ish Green/Blue
+                
+                // Draw Vertical Strip
+                // Centered vertically
+                let wallTop = (SCREEN_HEIGHT / 2) - (wallHeight / 2);
+                ctx.fillRect(strip, wallTop, 1, wallHeight);
+            }
+        }
+    }
+
+    /* --- MINIMAP RENDERER --- */
+    function drawMinimap() {
+        miniCtx.fillStyle = "#000";
+        miniCtx.fillRect(0, 0, miniCanvas.width, miniCanvas.height);
+
+        // Calculate offset to center player on minimap
+        const scale = MINI_SCALE;
+        const offsetX = (miniCanvas.width / 2) - (player.x * scale);
+        const offsetY = (miniCanvas.height / 2) - (player.y * scale);
+
+        // Draw Walls
+        miniCtx.fillStyle = "#555";
+        for (let y = 0; y < MAP_SIZE; y++) {
+            for (let x = 0; x < MAP_SIZE; x++) {
+                if (map[y][x] === 1) {
+                    miniCtx.fillRect(
+                        offsetX + (x * BLOCK_SIZE * scale), 
+                        offsetY + (y * BLOCK_SIZE * scale), 
+                        BLOCK_SIZE * scale, 
+                        BLOCK_SIZE * scale
+                    );
+                }
+            }
+        }
+
+        // Draw Player
+        miniCtx.fillStyle = "#0f0";
+        miniCtx.beginPath();
+        miniCtx.arc(miniCanvas.width / 2, miniCanvas.height / 2, 3, 0, Math.PI * 2);
+        miniCtx.fill();
+
+        // Draw Direction Line
+        miniCtx.strokeStyle = "#0f0";
+        miniCtx.beginPath();
+        miniCtx.moveTo(miniCanvas.width / 2, miniCanvas.height / 2);
+        miniCtx.lineTo(
+            (miniCanvas.width / 2) + Math.cos(player.dir) * 10,
+            (miniCanvas.height / 2) + Math.sin(player.dir) * 10
+        );
+        miniCtx.stroke();
+    }
+
+    /* --- GAME LOOP --- */
+    function gameLoop() {
+        movePlayer();
+        castRays();
+        drawMinimap();
+        requestAnimationFrame(gameLoop);
+    }
+
+    // Start
+    gameLoop();
+
+</script>
+</body>
+</html>
