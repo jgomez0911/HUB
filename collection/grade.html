@@ -248,39 +248,40 @@
         }
         .btn-modal-confirm:hover { background: #3399cc; }
 
-/* PHONE MODE (Left/Right Layout) */
+/* PHONE MODE (Left/Right Layout with 100dvh fix) */
     @media (min-width: 100px) and (max-width: 500px) {
-        /* 1. Sidebar on LEFT (30% width) */
-        /* This is very narrow, so we remove padding and borders */
+
+        /* 1. Sidebar: Left 30% */
         #sidebar {
-            width: 40%; 
+            width: 35%; 
             min-width: 0; /* Allow shrinking below text size */
             padding: 5px;
             border-right: 1px solid #333;
+            /* Remove box-shadow to save space */
+            box-shadow: none;
         }
 
-        /* 2. Main Area on RIGHT (70% width) 
-        #main-area {*/
-        #gradeCancas {
-            width: 50%;
-            overflow: hidden;
-            width: 0; /* Flexbox trick to force shrink */
+        /* 2. Main Area: Right 70% */
+        #main-area {
+            width: 65%;
+            width: 0; /* Flexbox trick to force shrinking */
             flex-grow: 1;
+            overflow: hidden;
         }
 
-        /* 3. Aggressively stack Sidebar inputs */
+        /* 3. Stack Inputs Vertically */
         #sidebar .row {
-            flex-direction: column; /* Stack Score/Weight vertical */
+            flex-direction: column; 
             gap: 2px;
         }
 
-        /* 4. Hide secondary text to save space */
+        /* 4. Hide non-essential UI */
         .subtitle, #slider-panel .slider-labels {
             display: none;
         }
 
-        /* 5. Shrink Fonts & Padding for the narrow sidebar */
-        h2 { font-size: 0.9rem; margin-bottom: 5px; }
+        /* 5. Micro-Sizing for Text/Inputs */
+        h2 { font-size: 0.8rem; margin-bottom: 5px; text-align: center; }
         label { font-size: 8px; margin-bottom: 0; }
         
         input[type="text"], input[type="number"] {
@@ -290,27 +291,37 @@
             width: 100%;
         }
 
-        /* 6. Stack the List Items (Score/Weight) */
+        /* 6. Compact List Items */
         .grade-item {
             flex-direction: column;
-            padding: 5px;
-            font-size: 10px;
+            padding: 4px;
+            font-size: 9px;
             align-items: flex-start;
+            border-left-width: 2px;
         }
         
-        /* Small X button */
         .btn-remove {
-            padding: 2px;
+            padding: 1px;
+            font-size: 10px;
             width: 100%;
             margin-top: 2px;
         }
 
-        /* 7. Adjust Slider Panel */
-        #slider-panel {
-            height: 60px;
-            padding: 0 10px;
+        .btn-add, .btn-clear {
+            font-size: 10px;
+            padding: 5px;
         }
-        .sim-score { font-size: 14px; }
+
+        /* 7. Compact Slider Panel */
+        #slider-panel {
+            height: 50px;
+            padding: 0 5px;
+        }
+        .sim-score { font-size: 12px; margin-bottom: 2px; }
+        
+        /* Mode Switcher Compact */
+        .mode-switch { padding: 2px; margin-bottom: 5px; }
+        .mode-option { padding: 4px; font-size: 10px; }
     }
 
     </style>
