@@ -248,55 +248,70 @@
         }
         .btn-modal-confirm:hover { background: #3399cc; }
 
-/* TABLET / SMALL LAPTOP MODE */
-    @media (max-width: 900px) {
-        
-        /* 1. Dynamic Sidebar Width (40%) */
+/* PHONE MODE (Left/Right Layout) */
+    @media (min-width: 100px) and (max-width: 500px) {
+        /* 1. Sidebar on LEFT (30% width) */
+        /* This is very narrow, so we remove padding and borders */
         #sidebar {
-            width: 40%;           
-            min-width: 200px;     
-            max-width: 400px;     
-            padding: 15px;       
-            box-sizing: border-box; /* Ensures padding fits inside the 40% */
+            width: 40%; 
+            min-width: 0; /* Allow shrinking below text size */
+            padding: 5px;
+            border-right: 1px solid #333;
         }
 
-        /* 2. Stack the input boxes to fit the narrower sidebar */
+        /* 2. Main Area on RIGHT (70% width) 
+        #main-area {*/
+        #gradeCancas {
+            width: 50%;
+            overflow: hidden;
+            width: 0; /* Flexbox trick to force shrink */
+            flex-grow: 1;
+        }
+
+        /* 3. Aggressively stack Sidebar inputs */
         #sidebar .row {
-            flex-direction: column;
-            gap: 5px;
+            flex-direction: column; /* Stack Score/Weight vertical */
+            gap: 2px;
         }
 
-        /* 3. CANVAS OVERFLOW FIX */
-        /* This forces the canvas to shrink into the remaining 60% space */
-        #main-area {
-            flex: 1;              
-            overflow: hidden;     /* Critical: Chops off excess canvas */
-            width: 0;             /* Critical: Forces flex calculation to shrink child */
+        /* 4. Hide secondary text to save space */
+        .subtitle, #slider-panel .slider-labels {
+            display: none;
         }
 
-        #canvas-container {
-            overflow: hidden;     
-        }
-
-        /* 4. Compact UI Elements */
-        .grade-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 5px;
-        }
+        /* 5. Shrink Fonts & Padding for the narrow sidebar */
+        h2 { font-size: 0.9rem; margin-bottom: 5px; }
+        label { font-size: 8px; margin-bottom: 0; }
         
-        .btn-remove {
+        input[type="text"], input[type="number"] {
+            font-size: 11px;
+            padding: 4px;
+            margin-bottom: 4px;
             width: 100%;
         }
 
-        h2 { font-size: 1.1rem; }
-        
-        input[type="text"], input[type="number"] {
-            font-size: 13px;
-            padding: 8px;
+        /* 6. Stack the List Items (Score/Weight) */
+        .grade-item {
+            flex-direction: column;
+            padding: 5px;
+            font-size: 10px;
+            align-items: flex-start;
         }
+        
+        /* Small X button */
+        .btn-remove {
+            padding: 2px;
+            width: 100%;
+            margin-top: 2px;
+        }
+
+        /* 7. Adjust Slider Panel */
+        #slider-panel {
+            height: 60px;
+            padding: 0 10px;
+        }
+        .sim-score { font-size: 14px; }
     }
-   
 
     </style>
 </head>
