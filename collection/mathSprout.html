@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Sprout v2</title>
+    <title>Math Sprout v3</title>
     <style>
         body {
             margin: 0;
@@ -12,11 +12,12 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             height: 100vh;
+            height: 100dvh; /* Mobile fix */
             overflow: hidden;
-            user-select: none; /* Prevents text selection while double clicking */
+            user-select: none;
         }
 
-        /* Sidebar */
+        /* --- SIDEBAR (Desktop Default) --- */
         #sidebar {
             width: 200px;
             background-color: #223322;
@@ -26,7 +27,25 @@
             gap: 15px;
             border-right: 2px solid #44aa44;
             box-shadow: 2px 0 15px rgba(0,0,0,0.5);
-            z-index: 10;
+            z-index: 20; /* High z-index to sit on top */
+            transition: transform 0.3s ease; /* Smooth slide animation */
+        }
+
+        /* Menu Button (Hidden on Desktop) */
+        #menuBtn {
+            display: none; 
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 30; /* Above everything */
+            background: #44aa44;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
         h2 { margin: 0 0 15px 0; color: #44ffaa; text-align: center; }
@@ -37,7 +56,7 @@
             margin-bottom: 20px;
         }
 
-        button {
+        button.tool-btn {
             width: 50px; height: 50px;
             border-radius: 50%;
             border: none; font-size: 20px; font-weight: bold;
@@ -45,13 +64,12 @@
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px rgba(0,0,0,0.2);
         }
-        button:active { transform: translateY(2px); box-shadow: 0 1px rgba(0,0,0,0.2); }
+        button.tool-btn:active { transform: translateY(2px); box-shadow: 0 1px rgba(0,0,0,0.2); }
 
         .btn-num { background: #e0c090; color: #3d2e1f; border: 3px solid #8b5a2b; }
         .btn-op { background: #a0e0a0; color: #1a3d1a; border: 3px solid #44aa44; }
         
-        #clearBtn { width: 100%; border-radius: 8px; background: #8b5a2b; color: white; font-size: 16px; padding: 10px; }
-        #clearBtn:hover { background: #a06b35; }
+        #clearBtn { width: 100%; border-radius: 8px; background: #8b5a2b; color: white; font-size: 16px; padding: 10px; border: none;}
 
         /* Canvas */
         #canvas-container {
@@ -63,7 +81,6 @@
 
         canvas { display: block; width: 100%; height: 100%; }
         
-        /* Status Text overlay */
         #status {
             position: absolute;
             top: 20px;
@@ -75,31 +92,110 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
             opacity: 0;
             transition: opacity 0.3s;
+            width: 80%;
+            text-align: center;
         }
+
+        /* --- MOBILE LAYOUT (Toggle Sidebar) --- */
+        @media (max-width: 768px) {
+            
+            /* Show the Menu Button */
+            #menuBtn { display: block; }
+
+            /* Hide Sidebar by moving it off-screen */
+            #sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                width: 260px; /* Slightly wider for ease of use */
+                transform: translateX(-100%); /* Hides it */
+                background: rgba(34, 51, 34, 0.95); /* Slight transparency */
+                backdrop-filter: blur(5px);
+            }
+
+            /* The class we add with JS to show it */
+            #sidebar.open {
+                transform: translateX(0);
+                box-shadow: 5px 0 50px rgba(0,0,0,0.8);
+            }
+            
+            /* Adjust status text to not overlap button */
+            #status { top: 70px; font-size: 14px; }
+        }
+
+        /* --- MOBILE LAYOUT (Toggle Sidebar) --- */
+        @media (max-width: 768px) {
+
+            body {
+                position: fixed; /* Prevents "bounce" scrolling */
+                max-width: 100%;
+                height: 100dvh;  /* Dynamic viewport height */
+                overflow: hidden;
+            }
+        
+            canvas {
+                width: 95% !important;   /* Fit within the screen width */
+                height: auto !important; /* Maintain the rectangle shape */
+                display: block;
+                margin: 0 auto;          /* Center the canvas horizontally */
+            }
+
+            /* Show the Menu Button */
+            #menuBtn { display: block; }
+
+            /* Sidebar Mobile Styles */
+            #sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                width: 260px; 
+                transform: translateX(-100%); 
+                background: rgba(34, 51, 34, 0.95); 
+                backdrop-filter: blur(5px);
+                
+                /* THE FIX: Extra top padding pushes content below the button */
+                padding-top: 80px; 
+                padding-left: 20px;
+                padding-right: 20px;
+                box-sizing: border-box; /* Ensures padding doesn't widen the box */
+            }
+
+            #sidebar.open {
+                transform: translateX(0);
+                box-shadow: 5px 0 50px rgba(0,0,0,0.8);
+            }
+            
+            #status { top: 70px; font-size: 14px; }
+        }
+
     </style>
 </head>
 <body>
 
+    <button id="menuBtn" onclick="toggleSidebar()">☰ Tools</button>
+
     <div id="sidebar">
         <h2>Math Sprout</h2>
         <p class="hint">
-            <b>Single Click & Drag</b> to move.<br><br>
-            <b>Double Click</b> a number to grow a vine, then click an operator to connect.
+            <b>Tap & Drag</b> to move.<br>
+            <b>Double Tap</b> a number, then tap an operator to connect.
         </p>
         
         <div class="spawner-group">
-            <button class="btn-num" onclick="spawnNumber(1)">1</button>
-            <button class="btn-num" onclick="spawnNumber(2)">2</button>
-            <button class="btn-num" onclick="spawnNumber(3)">3</button>
-            <button class="btn-num" onclick="spawnNumber(5)">5</button>
-            <button class="btn-num" onclick="spawnNumber(10)">10</button>
+            <button class="tool-btn btn-num" onclick="spawnNumber(1)">1</button>
+            <button class="tool-btn btn-num" onclick="spawnNumber(2)">2</button>
+            <button class="tool-btn btn-num" onclick="spawnNumber(3)">3</button>
+            <button class="tool-btn btn-num" onclick="spawnNumber(5)">5</button>
+            <button class="tool-btn btn-num" onclick="spawnNumber(10)">10</button>
         </div>
 
         <div class="spawner-group">
-            <button class="btn-op" onclick="spawnOperator('+')">+</button>
-            <button class="btn-op" onclick="spawnOperator('-')">−</button>
-            <button class="btn-op" onclick="spawnOperator('×')">×</button>
-            <button class="btn-op" onclick="spawnOperator('÷')">÷</button>
+            <button class="tool-btn btn-op" onclick="spawnOperator('+')">+</button>
+            <button class="tool-btn btn-op" onclick="spawnOperator('-')">−</button>
+            <button class="tool-btn btn-op" onclick="spawnOperator('×')">×</button>
+            <button class="tool-btn btn-op" onclick="spawnOperator('÷')">÷</button>
         </div>
 
         <button id="clearBtn" onclick="clearGarden()">Clear Garden</button>
@@ -114,16 +210,29 @@
     const canvas = document.getElementById('gardenCanvas');
     const ctx = canvas.getContext('2d');
     const statusDiv = document.getElementById('status');
+    const sidebar = document.getElementById('sidebar');
+
+    let appScale = 1;
 
     function resize() {
-        canvas.width = canvas.parentElement.offsetWidth;
-        canvas.height = canvas.parentElement.offsetHeight;
+        // Force canvas to match window size exactly for fullscreen feel
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        if (window.innerWidth <= 768) {
+            appScale = 0.6; // Mobile scale
+        } else {
+            appScale = 1.0; // Desktop scale
+        }
     }
     window.addEventListener('resize', resize);
-    resize();
+    resize(); 
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
+    }
 
     // --- Data Structures ---
-
     let nodeIdCounter = 0;
     let nodes = [];
     let connections = [];
@@ -138,7 +247,7 @@
             this.isDragging = false;
             this.spawnScale = 0; 
             this.targetScale = 1;
-            this.highlight = false; // For double-click feedback
+            this.highlight = false; 
         }
         update() {
             if (this.spawnScale < this.targetScale) {
@@ -164,17 +273,49 @@
         }
     }
 
+    // --- NEW SMART SPAWN LOGIC ---
+    function getSafeSpawnX() {
+        // On mobile, the sidebar (260px) might cover the left side.
+        // We spawn on the RIGHT side of the screen (70% across) to be visible.
+        if (window.innerWidth <= 768) {
+            return (canvas.width * 0.6) + (Math.random() * 40 - 20);
+        }
+        // Desktop: Center is fine
+        return canvas.width/2 + (Math.random() * 100 - 50);
+    }
+
+    function getSafeSpawnY() {
+        return canvas.height/2 + (Math.random() * 100 - 50);
+    }
+
     function spawnNumber(val) {
-        nodes.push(new NumberNode(100, 100 + nodes.length * 20, val));
+        nodes.push(new NumberNode(getSafeSpawnX(), getSafeSpawnY(), val));
+        if(window.innerWidth <= 768) toggleSidebar(); 
     }
 
     function spawnOperator(symbol) {
-        nodes.push(new OperatorNode(250, 150 + nodes.length * 20, symbol));
+        nodes.push(new OperatorNode(getSafeSpawnX(), getSafeSpawnY(), symbol));
+        if(window.innerWidth <= 768) toggleSidebar();
     }
 
     function spawnResult(x, y, val) {
-        // Offset output slightly so it doesn't overlap perfectly if spawn logic is generic
-        const resultNode = new NumberNode(x, y, val, true);
+        // Calculate where it WANTS to go
+        let targetX = x + (140 * appScale);
+        let targetY = y;
+
+        // BOUNDARY CHECK: If target is off-screen, flip it to the left or clamp it
+        const padding = 50 * appScale;
+        
+        // If it goes off the right edge, spawn to the LEFT of the operator instead
+        if (targetX > canvas.width - padding) {
+            targetX = x - (140 * appScale);
+        }
+        
+        // Final safety clamp to keep it strictly on screen
+        targetX = Math.max(padding, Math.min(canvas.width - padding, targetX));
+        targetY = Math.max(padding, Math.min(canvas.height - padding, targetY));
+
+        const resultNode = new NumberNode(targetX, targetY, val, true);
         nodes.push(resultNode);
         return resultNode;
     }
@@ -183,14 +324,13 @@
         nodes = [];
         connections = [];
         cancelWiring();
+        if(window.innerWidth <= 768) toggleSidebar();
     }
 
-    // --- Interaction State ---
+    // --- Interaction (Unchanged logic, just keeping structure) ---
     let dragTarget = null;
     let dragOffsetX = 0;
     let dragOffsetY = 0;
-    
-    // Wiring State
     let isWiring = false;
     let wireSourceNode = null;
     let wireMousePos = { x: 0, y: 0 };
@@ -203,27 +343,21 @@
         canvas.style.cursor = "default";
     }
 
-    // --- Helper Functions ---
-    function dist(x1, y1, x2, y2) {
-        return Math.sqrt((x2 - x1)**2 + (y2 - y1)**2);
-    }
+    function dist(x1, y1, x2, y2) { return Math.sqrt((x2 - x1)**2 + (y2 - y1)**2); }
 
     function getNodeAt(x, y) {
         for (let i = nodes.length - 1; i >= 0; i--) {
             const n = nodes[i];
-            if (dist(x, y, n.x, n.y) < n.radius) {
-                return n;
-            }
+            const hitRadius = (n.radius * appScale) * (appScale < 1 ? 2.0 : 1.2);
+            if (dist(x, y, n.x, n.y) < hitRadius) return n; 
         }
         return null;
     }
 
     function tryCalculate(opNode) {
         if (opNode.inputs.length !== 2) return;
-
         const input1 = nodes.find(n => n.id === opNode.inputs[0]);
         const input2 = nodes.find(n => n.id === opNode.inputs[1]);
-
         if (!input1 || !input2) return;
 
         let resultVal = 0;
@@ -240,218 +374,199 @@
                 break;
         }
 
-        const resultNode = spawnResult(opNode.x + 140, opNode.y, resultVal);
+        const resultNode = spawnResult(opNode.x, opNode.y, resultVal);
         connections.push({ from: opNode.id, to: resultNode.id, isAuto: true });
     }
 
-    // --- MOUSE EVENTS ---
-
-    // 1. Double Click to START wiring
-    canvas.addEventListener('dblclick', (e) => {
-        const r = canvas.getBoundingClientRect();
-        const x = e.clientX - r.left;
-        const y = e.clientY - r.top;
-        
+    // --- INPUT HANDLERS ---
+    function handleInputStart(x, y) {
         const clickedNode = getNodeAt(x, y);
 
-        if (clickedNode && clickedNode.type === 'number') {
-            // Start wiring mode
-            isWiring = true;
-            wireSourceNode = clickedNode;
-            wireSourceNode.highlight = true;
-            wireMousePos = { x, y };
-            
-            // UI Feedback
-            statusDiv.textContent = "Click an operator to connect...";
-            statusDiv.style.opacity = "1";
-            canvas.style.cursor = "crosshair";
-        }
-    });
-
-    // 2. Mouse Down (Handles Dragging AND Completing Wire)
-    canvas.addEventListener('mousedown', (e) => {
-        const r = canvas.getBoundingClientRect();
-        const x = e.clientX - r.left;
-        const y = e.clientY - r.top;
-        const clickedNode = getNodeAt(x, y);
-
-        // CASE A: We are currently wiring (drawing a line)
         if (isWiring) {
             if (clickedNode && clickedNode.type === 'operator') {
-                // Success: Connect
                 if (clickedNode.inputs.length < 2) {
                     connections.push({ from: wireSourceNode.id, to: clickedNode.id, isAuto: false });
                     clickedNode.inputs.push(wireSourceNode.id);
                     tryCalculate(clickedNode);
                 }
             }
-            // Whether we hit a node or background, clicking ends wiring mode
             cancelWiring();
-            return; // Don't start dragging immediately after connecting
+            return; 
         }
 
-        // CASE B: Normal Dragging
         if (clickedNode) {
             dragTarget = clickedNode;
             dragTarget.isDragging = true;
             dragOffsetX = x - clickedNode.x;
             dragOffsetY = y - clickedNode.y;
-            
-            // Bring to front
             nodes.splice(nodes.indexOf(clickedNode), 1);
             nodes.push(clickedNode);
+        } else {
+            if(window.innerWidth <= 768) sidebar.classList.remove('open');
         }
-    });
+    }
 
-    canvas.addEventListener('mousemove', (e) => {
-        const r = canvas.getBoundingClientRect();
-        const x = e.clientX - r.left;
-        const y = e.clientY - r.top;
-
+    function handleInputMove(x, y) {
         if (dragTarget) {
             dragTarget.x = x - dragOffsetX;
             dragTarget.y = y - dragOffsetY;
         }
-
         if (isWiring) {
             wireMousePos = { x, y };
         }
-    });
+    }
 
-    canvas.addEventListener('mouseup', () => {
+    function handleInputEnd() {
         if (dragTarget) {
             dragTarget.isDragging = false;
             dragTarget = null;
         }
+    }
+
+    function handleDoubleInput(x, y) {
+        const clickedNode = getNodeAt(x, y);
+        if (clickedNode && clickedNode.type === 'number') {
+            isWiring = true;
+            wireSourceNode = clickedNode;
+            wireSourceNode.highlight = true;
+            wireMousePos = { x, y };
+            statusDiv.textContent = "Select an operator to connect...";
+            statusDiv.style.opacity = "1";
+            canvas.style.cursor = "crosshair";
+        }
+    }
+
+    // --- EVENT LISTENERS ---
+    canvas.addEventListener('mousedown', e => {
+        const r = canvas.getBoundingClientRect();
+        handleInputStart(e.clientX - r.left, e.clientY - r.top);
+    });
+    canvas.addEventListener('mousemove', e => {
+        const r = canvas.getBoundingClientRect();
+        handleInputMove(e.clientX - r.left, e.clientY - r.top);
+    });
+    canvas.addEventListener('mouseup', handleInputEnd);
+    canvas.addEventListener('dblclick', e => {
+        const r = canvas.getBoundingClientRect();
+        handleDoubleInput(e.clientX - r.left, e.clientY - r.top);
     });
 
+    let lastTapTime = 0;
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const r = canvas.getBoundingClientRect();
+        const x = touch.clientX - r.left;
+        const y = touch.clientY - r.top;
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTapTime;
+        if (tapLength < 300 && tapLength > 0) {
+            handleDoubleInput(x, y);
+            lastTapTime = 0;
+        } else {
+            handleInputStart(x, y);
+            lastTapTime = currentTime;
+        }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const r = canvas.getBoundingClientRect();
+        handleInputMove(touch.clientX - r.left, touch.clientY - r.top);
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', e => {
+        e.preventDefault();
+        handleInputEnd();
+    });
 
     // --- RENDERING ---
-
     function drawConnection(x1, y1, x2, y2, isAuto) {
         const midX = (x1 + x2) / 2;
-        const curveY = isAuto ? Math.min(y1, y2) - 50 : (y1 + y2) / 2 + (Math.abs(x1-x2)*0.2);
+        const curveOffset = isAuto ? -50 * appScale : (Math.abs(x1-x2)*0.2);
+        const curveY = isAuto ? Math.min(y1, y2) + curveOffset : (y1 + y2) / 2 + curveOffset;
 
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.quadraticCurveTo(midX, curveY, x2, y2);
-        
-        ctx.lineWidth = isAuto ? 6 : 4;
+        const baseWidth = isAuto ? 6 : 4;
+        ctx.lineWidth = baseWidth * appScale; 
         ctx.strokeStyle = isAuto ? '#88cc88' : '#66aa66'; 
         ctx.lineCap = 'round';
         ctx.stroke();
-
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2 * appScale;
         ctx.strokeStyle = '#aaffaa';
         ctx.stroke();
     }
 
     function drawNode(node) {
-        const r = node.radius * node.spawnScale;
+        const r = node.radius * node.spawnScale * appScale;
         ctx.save();
         ctx.translate(node.x, node.y);
-
-        // Highlight ring if selected for wiring
         if (node.highlight) {
-            ctx.beginPath();
-            ctx.arc(0, 0, r + 8, 0, Math.PI * 2);
-            ctx.strokeStyle = '#ffff00';
-            ctx.lineWidth = 4;
-            ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, 0, r + (8*appScale), 0, Math.PI * 2);
+            ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 4*appScale; ctx.stroke();
         }
-
-        ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
         if (node.type === 'number') {
             if (node.isResult) {
-                // FRUIT STYLE (Output)
-                ctx.fillStyle = '#ff6b6b'; // Red/Pink Fruit
-                ctx.fill();
-                ctx.lineWidth = 4;
-                ctx.strokeStyle = '#c23b22'; // Dark Red Border
-                ctx.stroke();
-                
-                // Shine spot
-                ctx.beginPath();
-                ctx.arc(-r*0.3, -r*0.3, r*0.2, 0, Math.PI*2);
-                ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                ctx.fill();
+                ctx.fillStyle = '#ff6b6b'; ctx.fill();
+                ctx.lineWidth = 4*appScale; ctx.strokeStyle = '#c23b22'; ctx.stroke();
+                ctx.beginPath(); ctx.arc(-r*0.3, -r*0.3, r*0.2, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fill();
             } else {
-                // SEED STYLE (Input)
-                ctx.fillStyle = '#e0c090'; // Wood
-                ctx.fill();
-                ctx.lineWidth = 4;
-                ctx.strokeStyle = '#8b5a2b'; // Brown Border
-                ctx.stroke();
+                ctx.fillStyle = '#e0c090'; ctx.fill();
+                ctx.lineWidth = 4*appScale; ctx.strokeStyle = '#8b5a2b'; ctx.stroke();
             }
-
-            // Text
             ctx.fillStyle = node.isResult ? '#fff' : '#3d2e1f';
             ctx.font = "bold " + (r*0.8) + "px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
             ctx.fillText(node.value, 0, 0);
-
         } else {
-            // LEAF STYLE (Operator)
-            ctx.fillStyle = '#a0e0a0';
-            ctx.fill();
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = '#44aa44';
-            ctx.stroke();
-
-            // Input Slots
+            ctx.fillStyle = '#a0e0a0'; ctx.fill();
+            ctx.lineWidth = 4*appScale; ctx.strokeStyle = '#44aa44'; ctx.stroke();
+            const slotR = 5 * appScale;
             ctx.fillStyle = node.inputs.length > 0 ? '#44aa44' : '#ccffcc';
-            ctx.beginPath(); ctx.arc(-r*0.6, -r*0.6, 5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(-r*0.6, -r*0.6, slotR, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = node.inputs.length > 1 ? '#44aa44' : '#ccffcc';
-            ctx.beginPath(); ctx.arc(-r*0.6, r*0.6, 5, 0, Math.PI*2); ctx.fill();
-
-            // Text
+            ctx.beginPath(); ctx.arc(-r*0.6, r*0.6, slotR, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#1a3d1a';
             ctx.font = "bold " + (r*1.0) + "px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(node.opSymbol, 0, 2);
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText(node.opSymbol, 0, 2*appScale);
         }
-
         ctx.restore();
     }
 
     function animate() {
         requestAnimationFrame(animate);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         nodes.forEach(n => n.update());
-
-        // Existing Connections
         connections.forEach(conn => {
             const n1 = nodes.find(n => n.id === conn.from);
             const n2 = nodes.find(n => n.id === conn.to);
-            if (n1 && n2) {
-                drawConnection(n1.x, n1.y, n2.x, n2.y, conn.isAuto);
-            }
+            if (n1 && n2) drawConnection(n1.x, n1.y, n2.x, n2.y, conn.isAuto);
         });
-
-        // Active Wiring Line
         if (isWiring && wireSourceNode) {
             drawConnection(wireSourceNode.x, wireSourceNode.y, wireMousePos.x, wireMousePos.y, false);
         }
-
-        // Nodes
         nodes.forEach(node => drawNode(node));
     }
-
     animate();
 
-    // Initial Example
     setTimeout(() => {
-         spawnNumber(3); spawnNumber(4); spawnOperator('×');
-         nodes[0].x = 300; nodes[0].y = 200;
-         nodes[1].x = 300; nodes[1].y = 300;
-         nodes[2].x = 450; nodes[2].y = 250;
+        if(nodes.length === 0) {
+            spawnNumber(3); spawnNumber(4); spawnOperator('×');
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const offset = 75 * appScale; 
+            nodes[0].x = cx - offset; nodes[0].y = cy - (50 * appScale);
+            nodes[1].x = cx - offset; nodes[1].y = cy + (50 * appScale);
+            nodes[2].x = cx + offset; nodes[2].y = cy;
+        }
     }, 100);
-
 </script>
+
 </body>
 </html>

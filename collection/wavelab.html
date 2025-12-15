@@ -176,6 +176,124 @@
             flex-direction: column;
             z-index: 20;
         }
+
+
+/* PHONE LAYOUT (Compact 20px Controls) */
+    @media (max-width: 768px) {
+        
+        body {
+            flex-direction: column;
+            height: 100vh;
+            max-height: 95dvh;
+            max-width: 95dvh;
+            overflow: hidden;
+        }
+
+        /* 1. Canvas (Top 60%) */
+        canvas {
+            order: 1;
+            width: 100%;
+            height: 50dvh;
+            border-bottom: 2px solid #333;
+        }
+
+        /* 2. Sidebar (Bottom 40%) */
+        #sidebar {
+            order: 2;
+            width: 90%;
+            height: 40dvh;
+            border-right: none;
+            border-top: 1px solid #333;
+            padding: 10px; /* Reduced padding */
+            
+            display: flex;
+            flex-direction: column; /* Stack the groups vertically */
+            gap: 10px;
+            
+            overflow: hidden; 
+        }
+
+        /* Hide Titles */
+        #sidebar h2, #sidebar p { display: none; }
+
+        /* --- ROW 1: CONTROL GROUP (Inputs) --- */
+        /* If you have a wrapper div, this makes it full width */
+        .control-group {
+            width: 100%;
+            display: flex;
+            gap: 5px;
+            justify-content: space-between;
+        }
+
+        /* Target the inputs directly as well (in case there is no wrapper) */
+        #waveType, #freqInput, #addBtn {
+            height: 20px;   /* REQUESTED: 20px Tall */
+            font-size: 11px; /* Small font to fit */
+            margin: 0;
+            padding: 0 5px;
+            display: flex;
+            align-items: center; /* Center text vertically */
+        }
+
+        #waveType { flex: 1; }   /* Wide dropdown */
+        #freqInput { flex: 2; text-align: center; } /* Narrower input */
+        #addBtn { flex: 0 0 auto; } /* Button fits text */
+
+
+        /* --- ROW 2: MASTER VOLUME --- */
+        .volume-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        label[for="masterVolume"] {
+            font-size: 10px;
+            text-align: center;
+            color: #888;
+            margin: 0;
+        }
+
+        #masterVolume {
+            width: 100%;
+            height: 15px; /* Slim slider */
+            margin: 0;
+            display: block;
+        }
+
+        /* --- ROW 3: THE LIST (Scrollable & Full Width) --- */
+        #oscillators {
+            width: 100%;
+            flex-grow: 1; /* Take all remaining height */
+            
+            border-top: 1px solid #333;
+            padding-top: 5px;
+            
+            overflow-y: auto; 
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-height: 0; 
+        }
+
+        .osc-item {
+            padding: 5px 8px; /* Compact items */
+            background: #252525;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0; 
+            font-size: 11px;
+        }
+        
+        .osc-item button {
+            padding: 2px 6px;
+            font-size: 10px;
+            height: 20px; /* Match inputs */
+        }
+    }
     </style>
 </head>
 <body>

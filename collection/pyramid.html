@@ -81,6 +81,103 @@
             font-size: 14px;
             color: #fff;
         }
+
+/* PHONE LAYOUT (Pyramid Top, Controls Bottom) */
+    @media (max-width: 768px) {
+        
+        body {
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+        }
+
+        /* GAME AREA (Top 70%) */
+        canvas {
+            order: 1;
+            width: 100%;
+            height: 70dvh;
+            border-bottom: 2px solid #333;
+        }
+
+        /* CONTROLS AREA (Bottom 30%) */
+        #sidebar {
+            order: 2;
+            width: 100%;
+            height: 30dvh;
+            border-right: none;
+            border-top: 1px solid #333;
+            
+            display: flex;
+            flex-direction: row; 
+            flex-wrap: wrap; 
+            justify-content: center;
+            align-content: center; /* Vertically center the whole cluster */
+            gap: 5px;
+            padding: 15px;
+        }
+
+        /* Hide Title & Desc */
+        #sidebar h2, #sidebar p { display: none; }
+
+        /* 1. INPUT GROUP (Left Side) */
+        #sidebar .input-group {
+            width: 40% !important;
+            flex: 0 0 45%; 
+            margin: 0;
+            padding: 0; /* Remove padding from container */
+            background: none; /* Remove background if present */
+            border: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Align bottom to match button */
+        }
+        
+        /* The actual input box */
+        #sidebar input[type="number"] {
+            width: 85%;
+            height: 42px; /* FIXED HEIGHT */
+            margin: 0;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        #sidebar label {
+            font-size: 10px;
+            text-align: center;
+            margin-bottom: 4px;
+            width: 100%;
+            display: block;
+        }
+
+        /* 2. DROP BUTTON (Right Side) */
+        #sidebar button {
+            width: 35% !important;
+            flex: 0 0 35%;
+            height: 42px; /* MATCH INPUT HEIGHT */
+            margin-top: auto; /* Push down to align with input */
+            font-size: 14px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 3. BALANCE DISPLAY (Bottom Center) */
+        /* Assuming your balance is in a div with id="balance-display" or similar class */
+        /* You might need to add class="balance" to your balance div in HTML if it lacks one */
+        .balance-container, #wallet, .input-group:last-child {
+            order: 3;
+            width: 100% !important;
+            flex: 0 0 100%;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #4db8ff;
+        }
+    }
+
     </style>
 </head>
 <body>
