@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Random Receipt Generator</title>
+</head>
+<body>
+    <style>
+        body {
+    background-color: #d3d3d3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.receipt {
+    background: #fff;
+    width: 300px;
+    min-height: 400px;
+    padding: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    border-top: 5px solid #eee;
+    color: #333;
+}
+
+.center { text-align: center; }
+.bold { font-weight: bold; }
+.dashed-line { border-bottom: 1px dashed #000; margin: 10px 0; }
+
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.total-section {
+    margin-top: 15px;
+    font-size: 1.2em;
+}
+    </style>
+    <div class="controls">
+        <button id="generateBtn">Generate New Receipt</button>
+    </div>
+
+    <div id="receipt-paper" class="receipt">
+        </div>
+
+    <script>
+        const stores = [
+    {
+        name: "STAR-TECH ELECTRONICS",
+        address: "123 Silicon Valley Way",
+        items: ["USB-C Cable", "Gaming Mouse", "AAA Batteries", "HDMI Adapter", "Webcam"]
+    },
+    {
+        name: "THE DAILY GRIND CAFE",
+        address: "456 Espresso Lane",
+        items: ["Oat Milk Latte", "Croissant", "Avocado Toast", "Cold Brew", "Muffin"]
+    },
+    {
+        name: "GROCERY MART",
+        address: "789 Fresh St.",
+        items: ["Organic Bananas", "Whole Milk", "Greek Yogurt", "Sourdough Bread", "Eggs"]
+    }
+];
+
+function generateReceipt() {
+    const paper = document.getElementById('receipt-paper');
+    const store = stores[Math.floor(Math.random() * stores.length)];
+    
+    // Generate 3-5 random items
+    let itemCount = Math.floor(Math.random() * 3) + 3;
+    let itemsHTML = "";
+    let subtotal = 0;
+
+    for (let i = 0; i < itemCount; i++) {
+        const itemName = store.items[Math.floor(Math.random() * store.items.length)];
+        const price = (Math.random() * 20 + 2).toFixed(2);
+        subtotal += parseFloat(price);
+        itemsHTML += `
+            <div class="item-row">
+                <span>${itemName}</span>
+                <span>$${price}</span>
+            </div>`;
+    }
+
+    const tax = (subtotal * 0.08).toFixed(2);
+    const total = (subtotal + parseFloat(tax)).toFixed(2);
+
+    paper.innerHTML = `
+        <div class="center bold">${store.name}</div>
+        <div class="center">${store.address}</div>
+        <div class="center">Date: ${new Date().toLocaleDateString()}</div>
+        <div class="dashed-line"></div>
+        ${itemsHTML}
+        <div class="dashed-line"></div>
+        <div class="item-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+        <div class="item-row"><span>Tax (8%)</span><span>$${tax}</span></div>
+        <div class="total-section item-row bold">
+            <span>TOTAL</span>
+            <span>$${total}</span>
+        </div>
+        <div class="dashed-line"></div>
+        <div class="center">THANK YOU FOR SHOPPING!</div>
+    `;
+}
+
+document.getElementById('generateBtn').addEventListener('click', generateReceipt);
+
+// Run once on load
+generateReceipt();
+    </script>
+</body>
+</html>
