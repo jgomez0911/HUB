@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kids McD Ordering</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg" alt="Logo" width="50">
+        <h1>Welcome to McDonald's</h1>
+    </header>
+
+    <main id="menu-grid">
+        </main>
+
+    <div id="cart-button" onclick="toggleReceipt()">
+        🛒 <span id="cart-count">0</span>
+    </div>
+
+    <div id="custom-popup" class="hidden">
+        <div class="popup-content">
+            <header class="popup-header">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg" width="30">
+                <h2>Notice</h2>
+            </header>
+            <div class="popup-body">
+                <p id="popup-message"></p>
+                <button class="print-btn" onclick="closePopup()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="receipt-modal" class="hidden">
+        <div class="receipt-content">
+            <div class="receipt-paper">
+                <h2>ORDER RECEIPT</h2>
+                <p>Order #: <span id="order-number"></span></p>
+                <hr>
+                <div id="receipt-items"></div>
+                <hr>
+                <h3>Total: $<span id="receipt-total">0.00</span></h3>
+                <div class="receipt-btns">
+                    <button class="print-btn" onclick="printOrder()">Print Receipt</button>
+                    <button class="paid-btn" onclick="markAsPaid()">Paid / New Order</button>
+                    <button class="close-btn" onclick="toggleReceipt()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
