@@ -37,14 +37,16 @@
             <div class="receipt-paper">
                 <h2>ORDER RECEIPT</h2>
                 <p>Order #: <span id="order-number"></span></p>
-                <hr>
+
                 <div id="receipt-items"></div>
-                <hr>
-                <h3>Total: $<span id="receipt-total">0.00</span></h3>
-                <div class="receipt-btns">
-                    <button class="print-btn" onclick="printOrder()">Print Receipt</button>
-                    <button class="paid-btn" onclick="markAsPaid()">Paid / New Order</button>
-                    <button class="close-btn" onclick="toggleReceipt()">Close</button>
+
+                <div class="receipt-footer">
+                    <h3>Total: $<span id="receipt-total">0.00</span></h3>
+                    <div class="receipt-btns">
+                       <!-- <button class="print-btn" onclick="printOrder()">Print</button>. -->
+                        <button class="paid-btn" onclick="markAsPaid()">Paid</button>
+                        <button class="close-btn" onclick="toggleReceipt()">Close</button>
+                    </div>
                 </div>
             </div>
         </div>

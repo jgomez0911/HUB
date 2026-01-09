@@ -125,7 +125,6 @@ function toggleReceipt() {
     }
 }
 
-// 3. Updated Receipt Content with Remove Buttons
 function generateReceiptContent() {
     const orderNum = Math.floor(Math.random() * 900) + 100;
     const orderNumSpan = document.getElementById('order-number');
@@ -135,16 +134,17 @@ function generateReceiptContent() {
     itemsContainer.innerHTML = "";
     let total = 0;
 
-    // We use the index so we can remove the specific instance of the item
+    // 2. Build Rows with the specific Flexbox structure
     cart.forEach((item, index) => {
         const row = document.createElement('div');
-        row.className = 'item-row';
+        row.className = 'receipt-row'; // This triggers the CSS space-between
+
         row.innerHTML = `
-            <span>${item.name}</span>
-            <span>
-                $${item.price.toFixed(2)}
+            <span class="receipt-item-name">${item.name}</span>
+            <div class="receipt-item-right">
+                <span>$${item.price.toFixed(2)}</span>
                 <button class="remove-btn" onclick="removeItem(${index})">X</button>
-            </span>
+            </div>
         `;
         itemsContainer.appendChild(row);
         total += item.price;
@@ -152,13 +152,15 @@ function generateReceiptContent() {
 
     const totalSpan = document.getElementById('receipt-total');
     if (totalSpan) totalSpan.innerText = total.toFixed(2);
+
+    itemsContainer.scrollTop = itemsContainer.scrollHeight;
 }
 
 // 4. Remove Item Function
 function removeItem(index) {
     cart.splice(index, 1); // Remove 1 item at that specific index
     updateCartCount();
-    
+
     if (cart.length === 0) {
         toggleReceipt(); // Close modal if last item is removed
         showPopup("All items removed.");
