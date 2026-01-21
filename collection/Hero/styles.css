@@ -1,0 +1,122 @@
+body {
+    background: black;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    font-family: sans-serif;
+}
+
+#container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas {
+    background: white;
+    height: 100vh; 
+    width: auto;   
+    object-fit: contain; 
+    image-rendering: pixelated; 
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+/* --- TOUCH CONTROLS --- */
+#mobile-controls {
+    /* 1. DEFAULT: HIDDEN (For Desktop) */
+    display: none; 
+    
+    position: fixed;
+    bottom: 20px;
+    width: 100%;
+    height: 100px;
+    pointer-events: none;
+    
+    padding: 0 40px; 
+    box-sizing: border-box;
+    z-index: 100;
+}
+
+/* 2. MOBILE OVERRIDE: Visible only on touch devices */
+@media (pointer: coarse) {
+    #mobile-controls {
+        /* This turns the controls on */
+        display: flex; 
+        
+        /* Layout Alignment */
+        justify-content: space-between;
+        align-items: center; 
+    }
+}
+
+/* --- BUTTON STYLES --- */
+.touch-btn {
+    pointer-events: auto;
+    
+    /* Shadow Gray (Transparent) */
+    background: rgba(50, 50, 50, 0.6); 
+    border: 2px solid rgba(255, 255, 255, 0.3); 
+    
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    touch-action: none;
+    user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background 0.1s, transform 0.1s;
+}
+
+.touch-btn:active {
+    background: rgba(80, 80, 80, 0.8);
+    transform: scale(0.95);
+}
+
+#dpad {
+    display: flex;
+    gap: 15px; 
+    align-items: center;
+}
+
+/* Phone Sizes */
+.dpad-btn {
+    width: 50px; 
+    height: 50px;
+}
+
+#btnJump {
+    width: 60px; 
+    height: 60px;
+}
+
+/* --- TABLET OVERRIDES (Big Screens) --- */
+@media (min-width: 768px) and (pointer: coarse) {
+    #mobile-controls {
+        bottom: 30px;
+        padding: 0 60px;
+    }
+
+    .dpad-btn {
+        width: 80px;
+        height: 80px;
+        font-size: 24px;
+    }
+
+    #btnJump {
+        width: 90px;
+        height: 90px;
+        font-size: 24px;
+    }
+    
+    #dpad {
+        gap: 25px;
+    }
+}
