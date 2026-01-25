@@ -3,7 +3,7 @@ import { Sprite } from '../sprite.js'; // Note the '..' to go up one folder
 export class Saw extends Sprite {
     constructor({ position, range = 0 }) {
         super({
-            imageSrc: 'assets/Traps/Saw/On (38x38).png', // Check this path!
+            imageSrc: 'assets/Traps/Saw/on.png', // Check this path!
             frameRate: 8,
             frameBuffer: 4,
             loop: true,
@@ -13,12 +13,12 @@ export class Saw extends Sprite {
 
         this.range = range; // How far it moves
         this.distanceMoved = 0;
-        this.moveSpeed = 2;
+        this.moveSpeed = 1;
         this.moveRight = true;
         
         // Hitbox for the saw (slightly smaller than the image)
-        this.width = 38; 
-        this.height = 38;
+        this.width = 32; 
+        this.height = 32;
     }
 
     update(ctx) {

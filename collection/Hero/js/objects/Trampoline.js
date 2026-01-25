@@ -19,7 +19,7 @@ export class Trampoline extends Sprite {
             },
             jump: {
                 imageSrc: 'assets/Traps/Trampoline/Jump (28x28).png',
-                frameRate: 8, frameBuffer: 2, loop: false
+                frameRate: 8, frameBuffer: 8, loop: false
             }
         };
     }

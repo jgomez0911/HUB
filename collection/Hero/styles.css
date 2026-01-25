@@ -1,122 +1,150 @@
+/* --- GLOBAL LAYOUT --- */
 body {
-    background: black;
     margin: 0;
+    background-color: #202020;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    overflow: hidden;
-    font-family: sans-serif;
 }
 
-#container {
+/* GAME CONTAINER
+   We scale this up 2x so the 480x352 game looks big on your monitor! 
+*/
+.game-container {
     position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: inline-block;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    
+    /* SCALE UP for visibility */
+    transform: scale(2); 
+    transform-origin: center;
 }
 
 canvas {
-    background: white;
-    height: 100vh; 
-    width: auto;   
-    object-fit: contain; 
+    background-color: white;
+    display: block;
+    /* Ensure canvas renders clearly when scaled */
     image-rendering: pixelated; 
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
-/* --- TOUCH CONTROLS --- */
-#mobile-controls {
-    /* 1. DEFAULT: HIDDEN (For Desktop) */
-    display: none; 
-    
-    position: fixed;
-    bottom: 20px;
+/* --- MENU OVERLAY --- */
+#menuOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 100px;
-    pointer-events: none;
-    
-    padding: 0 40px; 
-    box-sizing: border-box;
-    z-index: 100;
-}
-
-/* 2. MOBILE OVERRIDE: Visible only on touch devices */
-@media (pointer: coarse) {
-    #mobile-controls {
-        /* This turns the controls on */
-        display: flex; 
-        
-        /* Layout Alignment */
-        justify-content: space-between;
-        align-items: center; 
-    }
-}
-
-/* --- BUTTON STYLES --- */
-.touch-btn {
-    pointer-events: auto;
-    
-    /* Shadow Gray (Transparent) */
-    background: rgba(50, 50, 50, 0.6); 
-    border: 2px solid rgba(255, 255, 255, 0.3); 
-    
-    color: rgba(255, 255, 255, 0.8);
-    border-radius: 50%;
-    touch-action: none;
-    user-select: none;
+    height: 100%;
+    background: rgba(30, 30, 30, 0.95);
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    align-items: center;
-    font-size: 14px;
-    font-weight: bold;
-    transition: background 0.1s, transform 0.1s;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    z-index: 10;
 }
 
-.touch-btn:active {
-    background: rgba(80, 80, 80, 0.8);
-    transform: scale(0.95);
+/* UPDATED: Smaller Title */
+.game-title {
+    font-size: 2.5rem; /* Reduced from 4rem */
+    margin: 0 0 10px 0;
+    text-shadow: 3px 3px 0px #000;
+    color: #ffd700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
 }
 
-#dpad {
+/* UPDATED: Smaller Instruction */
+.instruction {
+    font-size: 1rem; /* Reduced */
+    margin-bottom: 20px;
+    color: #cccccc;
+}
+
+/* --- CHARACTER SELECTOR --- */
+.character-selector {
     display: flex;
-    gap: 15px; 
+    gap: 10px; /* Tighter gap (was 20px) */
+    margin-bottom: 30px;
+}
+
+/* UPDATED: Smaller Boxes */
+.char-option {
+    border: 3px solid transparent;
+    padding: 10px; /* Reduced padding */
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    width: 70px; /* Reduced width (was 100px) to fit 4 items */
 }
 
-/* Phone Sizes */
-.dpad-btn {
-    width: 50px; 
-    height: 50px;
-}
-
-#btnJump {
-    width: 60px; 
-    height: 60px;
-}
-
-/* --- TABLET OVERRIDES (Big Screens) --- */
-@media (min-width: 768px) and (pointer: coarse) {
-    #mobile-controls {
-        bottom: 30px;
-        padding: 0 60px;
-    }
-
-    .dpad-btn {
-        width: 80px;
-        height: 80px;
-        font-size: 24px;
-    }
-
-    #btnJump {
-        width: 90px;
-        height: 90px;
-        font-size: 24px;
-    }
+/* SPRITE ANIMATION */
+.char-sprite {
+    width: 32px;  
+    height: 32px; 
+    background-repeat: no-repeat;
     
-    #dpad {
-        gap: 25px;
-    }
+    transform: scale(2); /* Keep character looking pixelated */
+    margin: 15px 0;      /* Reduced margin */
+    
+    image-rendering: pixelated; 
+    animation: playIdle 1s steps(11) infinite;
+}
+
+@keyframes playIdle {
+    from { background-position: 0px 0px; }
+    to { background-position: -352px 0px; }
+}
+
+.char-name {
+    font-size: 0.6rem; /* Smaller text */
+    color: #aaa;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.char-option:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px);
+}
+
+.char-option.selected {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.1);
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.char-option.selected .char-name {
+    color: #ffd700;
+}
+
+/* --- PLAY BUTTON --- */
+#playButton {
+    padding: 10px 40px; /* Smaller button */
+    font-size: 1.5rem;  /* Smaller font */
+    font-weight: 900;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    border-bottom: 4px solid #2E7D32; 
+    transition: all 0.1s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#playButton:hover {
+    background-color: #66BB6A;
+}
+
+#playButton:active {
+    transform: translateY(3px);
+    border-bottom: 1px solid #2E7D32;
 }

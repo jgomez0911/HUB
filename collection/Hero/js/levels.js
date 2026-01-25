@@ -1,24 +1,12 @@
-// js/levels.js
-
 import { CollisionBlock } from './collisionBlock.js';
-
-// CLEANER IMPORT: Get everything from the 'index.js' file
 import { 
-    Saw, 
-    Trophy, 
-    Checkpoint, 
-    Trampoline, 
-    Spikes, 
-    Fire, 
-    SpikeHead, 
-    SpikeBall, 
-    Fruit, 
-    FallingPlatform 
+    Saw, Trophy, Checkpoint, Trampoline, Spikes, Fire, 
+    SpikeHead, SpikeBall, Fruit, FallingPlatform 
 } from './objects/index.js';
 
 const GRID_SIZE = 32;
 
-// We still map numbers to Terrain crops here for easy access
+// ... TILES object remains the same ...
 const TILES = {
                 // --- TERRAIN ---
     // StoneBox
@@ -46,9 +34,6 @@ const TILES = {
             // -- virtical- borders-brown
     11: { type: 'terrain', x1: 240, x2: 255, y1: 0, y2: 48 },
 
-    
-
-
                 // --- OBJECTS ---
     // Breakable Box
     12: { type: 'box' },
@@ -64,35 +49,29 @@ export class LevelManager {
             row.forEach((symbol, x) => {
                 if (symbol === 0) return;
 
-                // --- CLEANER SWITCH STATEMENT ---
                 switch (symbol) {
-                    // --- OBJECTS ---
-                    case 20: // Saw
-                        objects.push(new Saw({
-                            position: { x: x * GRID_SIZE, y: y * GRID_SIZE },
-                            range: 100 
-                        }));
-                        break;
+                    // --- HAZARDS (DIE) ---
+                    case 13: objects.push(new Fire({ position: { x: x * GRID_SIZE, y: y * GRID_SIZE } })); break;// hidden first
+                    case 14: objects.push(new SpikeHead({ position: { x: x * GRID_SIZE, y: y * GRID_SIZE } })); break; // needs work
+                    case 15: objects.push(new SpikeBall({ position: { x: x * GRID_SIZE, y: y * GRID_SIZE } })); break; // ok
+                    case 16: objects.push(new Spikes({ position: { x: x * GRID_SIZE, y: y * GRID_SIZE } })); break; // ok
+                    case 20: objects.push(new Saw({ position: { x: x * GRID_SIZE, y: y * GRID_SIZE }, range: 100 })); break; // ok
 
-                    case 99: // Trophy
-                        objects.push(new Trophy({
-                            position: { x: x * GRID_SIZE, y: y * GRID_SIZE }
-                        }));
-                        break;
+                    // --- INTERACTIVE ---
+                    case 17: objects.push(new Trampoline({ position: { x: x * GRID_SIZE, y: y * GRID_SIZE } })); break; //ok
+                    case 18: objects.push(new FallingPlatform({ position: { x: x * GRID_SIZE, y: y * GRID_SIZE } })); break; //ok
+                    case 19: objects.push(new Fruit({ position: { x: x * GRID_SIZE, y: y * GRID_SIZE } })); break; // ok
+                    case 21: objects.push(new Checkpoint({ position: { x: x * GRID_SIZE, y: y * GRID_SIZE } })); break;
+                    case 99: objects.push(new Trophy({ position: { x: x * GRID_SIZE, y: y * GRID_SIZE } })); break;
 
                     // --- TERRAIN ---
-                    // Since multiple numbers (1, 4, etc.) can be terrain, 
-                    // we can check if it exists in our TILES map.
                     default:
                         if (TILES[symbol]) {
-                            const tileConfig = TILES[symbol];
-                            const sWidth = tileConfig.x2 - tileConfig.x1;
-                            const sHeight = tileConfig.y2 - tileConfig.y1;
-                            
+                            const tile = TILES[symbol];
                             blocks.push(new CollisionBlock({
                                 position: { x: x * GRID_SIZE, y: y * GRID_SIZE },
                                 imageSrc: 'assets/Terrain/Terrain.png',
-                                frameData: { sx: tileConfig.x1, sy: tileConfig.y1, sWidth: sWidth, sHeight: sHeight },
+                                frameData: { sx: tile.x1, sy: tile.y1, sWidth: tile.x2 - tile.x1, sHeight: tile.y2 - tile.y1 },
                                 dimensions: { width: GRID_SIZE, height: GRID_SIZE }
                             }));
                         }
@@ -123,12 +102,12 @@ export const level1 = {
         [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
         [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
         [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11], // Floating Boxes
-        [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
-        [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
-        [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
+        [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
+        [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
+        [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 19, 4, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
         [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11], // Platform
         [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
-        [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
+        [11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11],
         [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], // Grass Top
 
     ]

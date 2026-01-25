@@ -1,11 +1,11 @@
 import { Sprite } from '../sprite.js';
 
 export class Fruit extends Sprite {
-    constructor({ position, fruitName = 'Apple' }) {
+    constructor({ position, fruitName = 'Kiwi' }) {
         super({
             imageSrc: `assets/Items/Fruits/${fruitName}.png`, // e.g., Apple.png
             frameRate: 17, 
-            frameBuffer: 3,
+            frameBuffer: 5,
             loop: true,
             autoplay: true,
             position: position,
@@ -17,11 +17,11 @@ export class Fruit extends Sprite {
         this.animations = {
             idle: {
                 imageSrc: `assets/Items/Fruits/${fruitName}.png`,
-                frameRate: 17, frameBuffer: 3, loop: true
+                frameRate: 17, frameBuffer: 6, loop: true
             },
             collected: {
                 imageSrc: 'assets/Items/Fruits/Collected.png', // The "Poof" effect
-                frameRate: 6, frameBuffer: 4, loop: false
+                frameRate: 6, frameBuffer: 6, loop: false
             }
         };
     }

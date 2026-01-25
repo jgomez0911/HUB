@@ -3,7 +3,7 @@ import { Sprite } from '../sprite.js';
 export class Spikes extends Sprite {
     constructor({ position }) {
         super({
-            imageSrc: 'assets/Traps/Spikes/Idle (16x16).png',
+            imageSrc: 'assets/Traps/Spikes/idle.png',
             frameRate: 1, // It's just one image
             frameBuffer: 1,
             loop: false,
