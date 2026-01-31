@@ -1,31 +1,52 @@
 /* --- GLOBAL LAYOUT --- */
 body {
     margin: 0;
-    background-color: #202020;
+    background-color: #111; /* Dark background for the "Letterbox" bars */
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
+    width: 100vw;
+    overflow: hidden; /* Prevent scrolling */
+    touch-action: none; /* CRITICAL: Disables browser zoom/pan on mobile */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* GAME CONTAINER
-   We scale this up 2x so the 480x352 game looks big on your monitor! 
-*/
 .game-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- THE MAGIC WRAPPER --- */
+/* This box acts as the "screen". It grows to fit the window but STRICTLY keeps the shape. */
+#game-wrapper {
     position: relative;
-    display: inline-block;
+    aspect-ratio: 480/352; 
+    background: #000;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    
-    /* SCALE UP for visibility */
-    transform: scale(2); 
-    transform-origin: center;
+
+    /* LOGIC A: Default (Portrait/Square screens) - Fill Width */
+    width: 100%;
+    height: auto;
+    max-height: 100vh; 
+}
+
+/* LOGIC B: If the screen is wider than the game (Landscape) - Fill Height */
+@media (min-aspect-ratio: 480/352) {
+    #game-wrapper {
+        height: 100%;
+        width: auto; 
+    }
 }
 
 canvas {
-    background-color: white;
     display: block;
-    /* Ensure canvas renders clearly when scaled */
-    image-rendering: pixelated; 
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated; /* Keep pixels sharp */
 }
 
 /* --- MENU OVERLAY --- */
@@ -41,23 +62,22 @@ canvas {
     align-items: center;
     justify-content: center;
     color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    z-index: 10;
+    z-index: 200; /* Highest layer */
 }
 
-/* UPDATED: Smaller Title */
+/* Responsive Text using 'clamp' (Min, Preferred, Max) */
 .game-title {
-    font-size: 2.5rem; /* Reduced from 4rem */
+    font-size: clamp(20px, 10cqh, 50px); /* Responsive to container height */
     margin: 0 0 10px 0;
     text-shadow: 3px 3px 0px #000;
     color: #ffd700;
     text-transform: uppercase;
     letter-spacing: 3px;
+    text-align: center;
 }
 
-/* UPDATED: Smaller Instruction */
 .instruction {
-    font-size: 1rem; /* Reduced */
+    font-size: clamp(12px, 4cqh, 20px);
     margin-bottom: 20px;
     color: #cccccc;
 }
@@ -65,14 +85,13 @@ canvas {
 /* --- CHARACTER SELECTOR --- */
 .character-selector {
     display: flex;
-    gap: 10px; /* Tighter gap (was 20px) */
+    gap: 10px;
     margin-bottom: 30px;
 }
 
-/* UPDATED: Smaller Boxes */
 .char-option {
     border: 3px solid transparent;
-    padding: 10px; /* Reduced padding */
+    padding: 10px;
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -80,18 +99,17 @@ canvas {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 70px; /* Reduced width (was 100px) to fit 4 items */
+    width: 15%; /* Relative width */
+    min-width: 60px;
 }
 
-/* SPRITE ANIMATION */
+/* Sprite Animation Window */
 .char-sprite {
     width: 32px;  
     height: 32px; 
     background-repeat: no-repeat;
-    
-    transform: scale(2); /* Keep character looking pixelated */
-    margin: 15px 0;      /* Reduced margin */
-    
+    transform: scale(1.8); 
+    margin: 15px 0;      
     image-rendering: pixelated; 
     animation: playIdle 1s steps(11) infinite;
 }
@@ -102,32 +120,28 @@ canvas {
 }
 
 .char-name {
-    font-size: 0.6rem; /* Smaller text */
+    font-size: 10px;
     color: #aaa;
     font-weight: bold;
     margin-top: 5px;
 }
+
+.char-option.selected {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.1);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+.char-option.selected .char-name { color: #ffd700; }
 
 .char-option:hover {
     background: rgba(255, 255, 255, 0.15);
     transform: translateY(-3px);
 }
 
-.char-option.selected {
-    border-color: #ffd700;
-    background: rgba(255, 215, 0, 0.1);
-    transform: scale(1.05);
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-.char-option.selected .char-name {
-    color: #ffd700;
-}
-
 /* --- PLAY BUTTON --- */
 #playButton {
-    padding: 10px 40px; /* Smaller button */
-    font-size: 1.5rem;  /* Smaller font */
+    padding: 2% 8%;
+    font-size: clamp(16px, 5cqh, 30px);
     font-weight: 900;
     background-color: #4CAF50;
     color: white;
@@ -135,16 +149,65 @@ canvas {
     border-radius: 6px;
     cursor: pointer;
     border-bottom: 4px solid #2E7D32; 
-    transition: all 0.1s;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    transition: all 0.1s;
 }
 
-#playButton:hover {
-    background-color: #66BB6A;
-}
-
+#playButton:hover { background-color: #66BB6A; }
 #playButton:active {
     transform: translateY(3px);
     border-bottom: 1px solid #2E7D32;
+}
+
+/* --- TOUCH CONTROLS --- */
+#mobile-controls {
+    display: none; /* Hidden by default (Desktop) */
+    
+    position: absolute; /* Inside the wrapper */
+    bottom: 2%;
+    left: 0;
+    width: 100%;
+    height: 20%; /* Touch area takes bottom 20% of game */
+    
+    pointer-events: none; /* Allow seeing through the empty parts */
+    padding: 0 5%; 
+    box-sizing: border-box;
+    z-index: 100; /* Middle Layer */
+}
+
+/* Only show on touch devices */
+@media (pointer: coarse) {
+    #mobile-controls {
+        display: flex; 
+        justify-content: space-between;
+        align-items: center; 
+    }
+}
+
+.touch-btn {
+    pointer-events: auto; /* Enable clicking the buttons */
+    background: rgba(255, 255, 255, 0.15); 
+    border: 2px solid rgba(255, 255, 255, 0.3); 
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    touch-action: none;
+    user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Responsive sizing based on viewport or wrapper */
+    width: clamp(50px, 15vh, 80px);
+    height: clamp(50px, 15vh, 80px);
+    font-size: 20px;
+}
+
+.touch-btn:active {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(0.95);
+}
+
+#dpad {
+    display: flex;
+    gap: 15px;
 }

@@ -2,46 +2,73 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pixel Adventure</title>
-    
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <div class="game-container">
-        <canvas id="gameCanvas" width="480" height="352"></canvas>
-
-        <div id="menuOverlay">
-            <h1 class="game-title">Pixel Adventure</h1>
-            <p class="instruction">Choose your Hero</p>
+        
+        <div id="game-wrapper">
             
-            <div class="character-selector">
-                <div class="char-option selected" data-name="NinjaFrog">
-                    <div class="char-sprite" style="background-image: url('assets/MainCharacters/NinjaFrog/idle.png');"></div>
-                    <span class="char-name">FROG</span>
-                </div>
+            <canvas id="gameCanvas" width="480" height="352"></canvas>
 
-                <div class="char-option" data-name="PinkMan">
-                    <div class="char-sprite" style="background-image: url('assets/MainCharacters/PinkMan/idle.png');"></div>
-                    <span class="char-name">PINK</span>
+            <div id="mobile-controls">
+                <div id="dpad">
+                    <button id="btnLeft" class="touch-btn dpad-btn">◄</button>
+                    <button id="btnRight" class="touch-btn dpad-btn">►</button>
                 </div>
-
-                <div class="char-option" data-name="MaskDude">
-                    <div class="char-sprite" style="background-image: url('assets/MainCharacters/MaskDude/idle.png');"></div>
-                    <span class="char-name">MASK</span>
-                </div>
-
-                <div class="char-option" data-name="VirtualGuy">
-                    <div class="char-sprite" style="background-image: url('assets/MainCharacters/VirtualGuy/idle.png');"></div>
-                    <span class="char-name">VIRTUAL</span>
-                </div>
+                <button id="btnJump" class="touch-btn">JUMP</button>
             </div>
 
-            <button id="playButton">PLAY</button>
+            <div id="menuOverlay">
+                <h1 class="game-title">Pixel Adventure</h1>
+                <p class="instruction">Choose your Hero</p>
+                
+                <div class="character-selector">
+                    <div class="char-option selected" data-name="NinjaFrog">
+                        <div class="char-sprite" style="background-image: url('assets/MainCharacters/NinjaFrog/idle.png');"></div>
+                        <span class="char-name">FROG</span>
+                    </div>
+
+                    <div class="char-option" data-name="PinkMan">
+                        <div class="char-sprite" style="background-image: url('assets/MainCharacters/PinkMan/idle.png');"></div>
+                        <span class="char-name">PINK</span>
+                    </div>
+
+                    <div class="char-option" data-name="MaskDude">
+                        <div class="char-sprite" style="background-image: url('assets/MainCharacters/MaskDude/idle.png');"></div>
+                        <span class="char-name">MASK</span>
+                    </div>
+
+                    <div class="char-option" data-name="VirtualGuy">
+                        <div class="char-sprite" style="background-image: url('assets/MainCharacters/VirtualGuy/idle.png');"></div>
+                        <span class="char-name">VIRTUAL</span>
+                    </div>
+                </div>
+
+                <button id="playButton">PLAY</button>
+            </div>
         </div>
     </div>
 
     <script type="module" src="js/main.js"></script>
+
+    <script>
+        const setupTouchButton = (id, key) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const triggerEvent = (type, key) => window.dispatchEvent(new KeyboardEvent(type, { key: key }));
+            
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); triggerEvent('keydown', key); });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); triggerEvent('keyup', key); });
+            btn.addEventListener('mousedown', () => triggerEvent('keydown', key));
+            btn.addEventListener('mouseup', () => triggerEvent('keyup', key));
+        };
+        setupTouchButton('btnLeft', 'ArrowLeft');
+        setupTouchButton('btnRight', 'ArrowRight');
+        setupTouchButton('btnJump', ' ');
+    </script>
 </body>
 </html>
