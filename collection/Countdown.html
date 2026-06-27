@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summer Break Countdown!</title>
+    <style>
+        :root {
+            --primary-color: #ff6b6b;
+            --secondary-color: #4ecdc4;
+            --dark-color: #ffffff;
+            --bg-color: #000000;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--dark-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            text-align: center;
+            background: #111111;
+            padding: 2.5rem 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(255,255,255,0.05);
+            width: 90%; 
+            max-width: 800px; 
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--dark-color);
+            margin-bottom: 1.5rem;
+            font-size: calc(1.5rem + 1.5vw); 
+            white-space: nowrap;
+        }
+
+        #final-day-banner {
+            display: none;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1.8rem;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 2rem;
+            white-space: nowrap;
+            overflow-x: auto; 
+            padding-bottom: 5px; 
+        }
+
+        .controls::-webkit-scrollbar {
+            height: 4px;
+        }
+        .controls::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 2px;
+        }
+
+        .btn {
+            background-color: #222222;
+            border: 2px solid #444444;
+            padding: 10px 15px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            color: #ffffff;
+            flex: 1 0 auto; 
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            background-color: #333333;
+            border-color: #666666;
+        }
+
+        .btn.active {
+            background-color: var(--secondary-color);
+            color: #000000;
+            border-color: var(--secondary-color);
+        }
+
+        .countdown-display {
+            font-size: calc(1.6rem + 2vw); 
+            font-weight: bold;
+            font-family: monospace;
+            background: #1a1a1a;
+            padding: 1.5rem 0.5rem;
+            border-radius: 15px;
+            border: 2px dashed var(--secondary-color);
+            min-height: 4.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .unit-wrapper {
+            display: inline-block;
+            margin: 0 0.5vw;
+        }
+        
+        .unit-label {
+            font-size: 0.8rem;
+            display: block;
+            color: #aaa;
+            text-transform: uppercase;
+            font-family: sans-serif;
+            margin-top: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 480px) {
+            .unit-label {
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="final-day-banner">🚨 FINAL DAY! 🚨</div>
+        <h1>☀️ Summer Break Countdown ☀️</h1>
+        
+        <div class="controls">
+            <button class="btn active" data-mode="default" onclick="setMode('default')">Default</button>
+            <button class="btn" data-mode="days" onclick="setMode('days')">Days</button>
+            <button class="btn" data-mode="hours" onclick="setMode('hours')">Hours</button>
+            <button class="btn" data-mode="seconds" onclick="setMode('seconds')">Seconds</button>
+            <button class="btn" data-mode="milliseconds" onclick="setMode('milliseconds')">Milliseconds</button>
+        </div>
+
+        <div class="countdown-display" id="countdown">
+            </div>
+    </div>
+
+    <script>
+        const targetDate = new Date('September 2, 2026 00:00:00').getTime();
+        let currentMode = 'default';
+
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // Fixed: Now checks for exact match using data-mode attribute
+            document.querySelectorAll('.btn').forEach(btn => {
+                if (btn.dataset.mode === mode) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            updateCountdown(); 
+        }
+
+        function pad(num, size = 2) {
+            let s = num + "";
+            while (s.length < size) s = "0" + s;
+            return s;
+        }
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const timeDifference = targetDate - now;
+            const banner = document.getElementById('final-day-banner');
+            const display = document.getElementById('countdown');
+
+            if (timeDifference <= 0) {
+                banner.style.display = 'none';
+                display.innerHTML = "Summer Break is OVER!";
+                return;
+            }
+
+            if (timeDifference <= 86400000) {
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
+
+            const totalMs = timeDifference;
+            const totalSeconds = Math.floor(timeDifference / 1000);
+            const totalHours = Math.floor(timeDifference / (1000 * 60 * 60));
+            const totalDays = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+
+            const d = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+            const h = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((timeDifference % (1000 * 60)) / 1000);
+            const ms = timeDifference % 1000;
+
+            switch(currentMode) {
+                case 'days':
+                    display.innerHTML = `<div>${totalDays}<span class="unit-label">Days Left</span></div>`;
+                    break;
+                case 'hours':
+                    display.innerHTML = `<div>${totalHours.toLocaleString()}<span class="unit-label">Total Hours</span></div>`;
+                    break;
+                case 'seconds':
+                    display.innerHTML = `<div>${totalSeconds.toLocaleString()}<span class="unit-label">Total Seconds</span></div>`;
+                    break;
+                case 'milliseconds':
+                    display.innerHTML = `<div>${totalMs.toLocaleString()}<span class="unit-label">Total Milliseconds</span></div>`;
+                    break;
+                case 'default':
+                default:
+                    display.innerHTML = `
+                        <div class="unit-wrapper">${pad(d)}<span class="unit-label">Days</span></div>:
+                        <div class="unit-wrapper">${pad(h)}<span class="unit-label">Hrs</span></div>:
+                        <div class="unit-wrapper">${pad(m)}<span class="unit-label">Min</span></div>:
+                        <div class="unit-wrapper">${pad(s)}<span class="unit-label">Sec</span></div>:
+                        <div class="unit-wrapper">${pad(ms, 3)}<span class="unit-label">Ms</span></div>
+                    `;
+                    break;
+            }
+        }
+
+        setInterval(updateCountdown, 1);
+        updateCountdown();
+    </script>
+</body>
+</html>
