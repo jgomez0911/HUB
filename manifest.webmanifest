@@ -1,0 +1,25 @@
+{
+  "name": "Gomez Project Hub",
+  "short_name": "Gomez Hub",
+  "description": "Kid-friendly pretend play registers, games, and learning apps by Jorge Gomez.",
+  "start_url": "/hub.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#e0f7ff",
+  "theme_color": "#38bdf8",
+  "icons": [
+    {
+      "src": "/hub-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/hub-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

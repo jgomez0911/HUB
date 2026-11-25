@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>The Michoacana Lili — Pretend Play Menu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Fredoka', 'sans-serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            ice: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+            },
+            royal: {
+              50: '#faf5ff',
+              100: '#f3e8ff',
+              200: '#e9d5ff',
+              500: '#a855f7',
+              600: '#9333ea',
+              700: '#7e22ce',
+              800: '#6b21a8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;     /* Firefox */
+    }
+
+    *::-webkit-scrollbar {
+        display: none;             /* Chrome, Safari, iOS Safari, Opera */
+    }
+
+    html, body {
+        touch-action: pan-x pan-y; /* Allows normal scrolling, blocks pinch-zoom */
+        overscroll-behavior: none; /* Prevents rubber-band bounce on iOS/Android */
+    }
+
+    body {
+      background: linear-gradient(160deg, #fce7f3 0%, #e0f2fe 48%, #f3e8ff 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Subtle floating snowflakes background */
+    .snowflake-bg {
+      position: fixed;
+      top: -10%;
+      color: rgba(255, 255, 255, 0.75);
+      pointer-events: none;
+      z-index: 0;
+      animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+      0% { transform: translateY(-5vh) rotate(0deg); opacity: 0; }
+      15% { opacity: 0.9; }
+      85% { opacity: 0.9; }
+      100% { transform: translateY(108vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* Hide scrollbar on category strip while allowing touch scroll */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Receipt zigzag edge effect */
+    .receipt-edge {
+      background-image: radial-gradient(circle at 10px 0, transparent 0, transparent 7px, #ffffff 8px);
+      background-size: 20px 14px;
+      background-repeat: repeat-x;
+    }
+
+    /* Stamp animation */
+    @keyframes stampPop {
+      0% { transform: scale(2.2) rotate(-18deg); opacity: 0; }
+      65% { transform: scale(0.92) rotate(-10deg); opacity: 1; }
+      100% { transform: scale(1) rotate(-12deg); opacity: 1; }
+    }
+
+    .paid-stamp {
+      animation: stampPop 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    /* Button press bounce */
+    .btn-bounce:active {
+      transform: scale(0.95);
+    }
+
+    /* Card tap pop feedback */
+    @keyframes cardPop {
+      0% { transform: scale(1); }
+      45% { transform: scale(0.96); }
+      100% { transform: scale(1); }
+    }
+
+    .card-pop {
+      animation: cardPop 0.24s ease-out;
+    }
+  </style>
+</head>
+<body class="font-sans text-slate-800 pb-28">
+
+  <!-- Decorative Snowflakes Container -->
+  <div id="snowLayer" aria-hidden="true"></div>
+
+  <!-- Top Sticky Header -->
+  <header class="sticky top-0 z-30 bg-gradient-to-r from-pink-600 via-royal-700 to-ice-600 text-white shadow-lg border-b-4 border-pink-200">
+    <div class="max-w-4xl mx-auto px-3 sm:px-5 py-3 flex items-center justify-between gap-2">
+      <!-- Brand / Custom Frozen + Michoacana Ice Cream Kart SVG -->
+      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/95 p-1.5 shadow-md flex-shrink-0 flex items-center justify-center border-2 border-pink-200">
+          <!-- Custom SVG of the Pink/Purple/Ice-Blue Frozen Michoacana Kart -->
+          <svg viewBox="0 0 80 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Canopy Umbrella -->
+            <path d="M12 24C12 13 24 7 40 7C56 7 68 13 68 24H12Z" fill="#EC4899"/>
+            <path d="M24 24C24 13 31 7 40 7C49 7 56 13 56 24H24Z" fill="#38BDF8"/>
+            <path d="M34 24C34 13 36.5 7 40 7C43.5 7 46 13 46 24H34Z" fill="#FAF5FF"/>
+            <!-- Canopy Scallops -->
+            <path d="M12 24Q19 29 26 24Q33 29 40 24Q47 29 54 24Q61 29 68 24" stroke="#FDE047" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Poles -->
+            <rect x="21" y="24" width="3" height="18" rx="1.5" fill="#E0F2FE"/>
+            <rect x="56" y="24" width="3" height="18" rx="1.5" fill="#E0F2FE"/>
+            <!-- Ice Cream Cone Sign on Top -->
+            <polygon points="36,3 44,3 40,10" fill="#F59E0B"/>
+            <circle cx="40" cy="3" r="3.5" fill="#F472B6"/>
+            <!-- Kart Body -->
+            <rect x="14" y="40" width="52" height="22" rx="8" fill="#9333EA" stroke="#FBCFE8" stroke-width="2"/>
+            <rect x="18" y="44" width="44" height="10" rx="4" fill="#38BDF8"/>
+            <!-- Snowflake Emblem -->
+            <circle cx="40" cy="49" r="5" fill="#FFFFFF"/>
+            <path d="M40 45V53M36 49H44M37.5 46.5L42.5 51.5M42.5 46.5L37.5 51.5" stroke="#DB2777" stroke-width="1.4" stroke-linecap="round"/>
+            <!-- Wheels -->
+            <circle cx="25" cy="64" r="8" fill="#1E293B" stroke="#BAE6FD" stroke-width="2.5"/>
+            <circle cx="25" cy="64" r="3" fill="#FDE047"/>
+            <circle cx="55" cy="64" r="8" fill="#1E293B" stroke="#BAE6FD" stroke-width="2.5"/>
+            <circle cx="55" cy="64" r="3" fill="#FDE047"/>
+          </svg>
+        </div>
+        <div class="truncate">
+          <div class="flex items-center gap-1.5">
+            <span class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider bg-amber-300 text-royal-900 px-2 py-0.5 rounded-full shadow-sm">
+              ❄️ Paletería & Frozen Kart
+            </span>
+          </div>
+          <h1 class="font-display text-lg sm:text-2xl font-bold leading-tight tracking-tight drop-shadow-sm truncate mt-0.5">
+            La Michoacana Lili
+          </h1>
+        </div>
+      </div>
+
+      <!-- Header Action: Sound Toggle Only (Single Cart Button lives at the bottom) -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button
+          id="soundToggleBtn"
+          onclick="toggleSound()"
+          aria-label="Toggle Magical Sound Effects"
+          class="btn-bounce p-2.5 sm:p-3 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/30 text-white transition flex items-center justify-center shadow-sm"
+          title="Toggle Sound Effects"
+        >
+          <span id="soundIcon" class="text-xl leading-none">🔊</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Category Filter Bar -->
+    <nav class="bg-white/95 backdrop-blur-md border-t border-pink-200 px-3 py-2.5">
+      <div id="categoryTabs" class="max-w-4xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <!-- Populated dynamically via JS -->
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="relative z-10 max-w-4xl mx-auto px-3 sm:px-5 pt-4 sm:pt-6">
+    <!-- Welcome / Kid-Friendly Prompt Banner -->
+    <div class="bg-white/90 backdrop-blur-sm rounded-3xl p-4 sm:p-5 mb-5 shadow-md border-2 border-pink-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-200 via-ice-200 to-royal-200 flex items-center justify-center text-2xl sm:text-3xl shadow-inner flex-shrink-0">
+          👑
+        </div>
+        <div>
+          <h2 class="font-display text-lg sm:text-xl font-bold text-royal-800">
+            Welcome to The Michoacana Lili!
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-600 font-medium">
+            Tap any frosty cone, paleta popsicle, or magical topper to add it to your tray!
+          </p>
+        </div>
+      </div>
+      <button
+        onclick="playIceCreamJingle()"
+        class="btn-bounce self-end sm:self-center flex items-center gap-1.5 bg-pink-100 hover:bg-pink-200 text-pink-800 font-display font-semibold text-xs sm:text-sm px-3.5 py-2 rounded-xl border border-pink-300 transition"
+      >
+        <span>🎶</span>
+        <span>Ring Kart Bell</span>
+      </button>
+    </div>
+
+    <!-- Menu Grid -->
+    <section id="menuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Menu item cards rendered dynamically via JS -->
+    </section>
+  </main>
+
+  <!-- Single Sticky Bottom Cart & Checkout Bar -->
+  <div class="fixed bottom-0 inset-x-0 z-30 p-3 sm:p-4 bg-gradient-to-t from-royal-900/95 via-royal-900/80 to-transparent pointer-events-none">
+    <div class="max-w-4xl mx-auto pointer-events-auto">
+      <div class="bg-white rounded-3xl p-3 sm:p-3.5 shadow-2xl border-2 border-pink-300 flex items-center justify-between gap-3">
+        <button
+          onclick="handleBottomCartClick()"
+          class="btn-bounce flex items-center gap-3 text-left flex-1 min-w-0 px-2 py-1 rounded-2xl hover:bg-pink-50 transition"
+        >
+          <div class="relative bg-gradient-to-br from-pink-100 to-ice-100 text-royal-700 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 border border-pink-200">
+            🛒
+            <span
+              id="bottomCartCount"
+              class="absolute -top-1.5 -right-1.5 bg-pink-600 text-white text-xs font-extrabold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow"
+            >
+              0
+            </span>
+          </div>
+          <div class="truncate">
+            <p class="text-xs font-bold uppercase tracking-wider text-pink-600">View Tray</p>
+            <p id="bottomCartTotal" class="font-display text-xl sm:text-2xl font-bold text-royal-800 leading-none mt-0.5">
+              $0.00
+            </p>
+          </div>
+        </button>
+
+        <button
+          onclick="handleCheckoutAttempt()"
+          class="btn-bounce bg-gradient-to-r from-pink-600 via-royal-600 to-ice-500 hover:from-pink-500 hover:to-ice-400 text-white font-display font-bold text-base sm:text-lg px-5 sm:px-7 py-3.5 rounded-2xl shadow-lg border-2 border-white/50 flex items-center gap-2 flex-shrink-0 transition"
+        >
+          <span>View Tray</span>
+          <span>✨</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CART DRAWER / MODAL -->
+  <div
+    id="cartModal"
+    class="fixed inset-0 z-40 hidden items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4"
+    onclick="if(event.target === this) closeCart()"
+  >
+    <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl border-t-4 sm:border-4 border-ice-300 overflow-hidden flex flex-col max-h-[88vh]">
+      <!-- Cart Header -->
+      <div class="bg-gradient-to-r from-pink-600 via-royal-700 to-ice-600 text-white px-5 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🛒</span>
+          <div>
+            <h3 class="font-display text-xl font-bold leading-tight">Lili’s Ice Cream Tray</h3>
+            <p class="text-xs text-pink-100">Review your treats before completing order</p>
+          </div>
+        </div>
+        <button
+          onclick="closeCart()"
+          aria-label="Close Tray"
+          class="btn-bounce w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white font-bold text-lg"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Cart Items List -->
+      <div id="cartItemsContainer" class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-3 bg-ice-50/50">
+        <!-- Populated dynamically -->
+      </div>
+
+      <!-- Cart Footer -->
+      <div class="p-4 sm:p-5 bg-white border-t-2 border-ice-100 space-y-3">
+        <div class="flex items-center justify-between text-slate-600 text-sm font-semibold">
+          <span>Total Treats:</span>
+          <span id="modalItemCount">0 items</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="font-display text-lg font-bold text-slate-700">Total Amount:</span>
+          <span id="modalTotalAmount" class="font-display text-2xl font-bold text-royal-700">$0.00</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5 pt-1">
+          <button
+            onclick="clearCart()"
+            class="btn-bounce col-span-1 py-3.5 px-3 rounded-2xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-display font-bold text-sm sm:text-base border border-slate-200 transition"
+          >
+            Clear Tray
+          </button>
+          <button
+            onclick="placeOrder()"
+            class="btn-bounce col-span-2 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-display font-bold text-base sm:text-lg shadow-lg border-2 border-emerald-200 flex items-center justify-center gap-2 transition"
+          >
+            <span>Complete Order</span>
+            <span>💳</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FRIENDLY NOTICE MODAL -->
+  <div
+    id="noticeModal"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+    onclick="if(event.target === this) closeNotice()"
+  >
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl border-4 border-pink-300 overflow-hidden text-center p-6 space-y-4">
+      <div class="w-16 h-16 mx-auto rounded-full bg-ice-100 border-2 border-ice-300 flex items-center justify-center text-4xl">
+        ⛄
+      </div>
+      <div>
+        <h3 class="font-display text-2xl font-bold text-royal-800">Notice</h3>
+        <p id="noticeMessage" class="text-slate-600 font-medium text-base mt-1.5">
+          Your ice cream tray is empty! Tap any treat to add it.
+        </p>
+      </div>
+      <button
+        onclick="closeNotice()"
+        class="btn-bounce w-full py-3.5 rounded-2xl bg-gradient-to-r from-pink-600 via-royal-600 to-ice-500 text-white font-display font-bold text-lg shadow-md"
+      >
+        OK 🍦
+      </button>
+    </div>
+  </div>
+
+  <!-- ORDER RECEIPT MODAL -->
+  <div
+    id="receiptModal"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4 overflow-y-auto"
+  >
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border-4 border-amber-300 overflow-hidden my-auto">
+      <!-- Top Ribbon -->
+      <div class="bg-gradient-to-r from-pink-600 via-royal-700 to-ice-600 text-white p-5 text-center relative">
+        <div class="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest mb-1">
+          ❄️ Official Pretend Receipt
+        </div>
+        <h3 class="font-display text-2xl sm:text-3xl font-bold tracking-wide">ORDER RECEIPT</h3>
+        <p id="receiptOrderNumber" class="font-mono text-amber-300 font-bold text-lg mt-0.5">
+          ORDER #LILI-104
+        </p>
+      </div>
+
+      <!-- Receipt Paper Body -->
+      <div class="p-5 sm:p-6 bg-white relative">
+        <div class="flex justify-between text-xs text-slate-400 font-semibold border-b border-dashed border-slate-300 pb-2.5 mb-3">
+          <span>THE MICHOACANA LILI</span>
+          <span id="receiptTimestamp">TODAY</span>
+        </div>
+
+        <!-- Itemized List -->
+        <div id="receiptItemsList" class="space-y-2.5 max-h-56 overflow-y-auto pr-1 text-sm sm:text-base">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Total & PAID Stamp -->
+        <div class="mt-4 pt-3.5 border-t-2 border-dashed border-slate-300 flex items-center justify-between relative">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Paid</p>
+            <p id="receiptTotalAmount" class="font-display text-3xl font-bold text-slate-800">
+              $0.00
+            </p>
+          </div>
+
+          <!-- Visual PAID Stamp -->
+          <div class="paid-stamp border-4 border-emerald-500 text-emerald-600 font-display font-extrabold text-xl sm:text-2xl px-4 py-1 rounded-xl tracking-wider shadow-sm bg-emerald-50/80">
+            PAID ✨
+          </div>
+        </div>
+
+        <!-- Pretend Play Action Buttons -->
+        <div class="mt-6 space-y-2.5">
+          <button
+            onclick="playIceCreamJingle()"
+            class="btn-bounce w-full py-3.5 px-4 rounded-2xl bg-amber-300 hover:bg-amber-200 text-royal-900 font-display font-bold text-base sm:text-lg shadow border-2 border-amber-400 flex items-center justify-center gap-2 transition"
+          >
+            <span>🔔</span>
+            <span>Ring Kart Bell</span>
+          </button>
+
+          <button
+            onclick="finishOrderAndReset()"
+            class="btn-bounce w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-pink-600 via-royal-600 to-ice-500 hover:from-pink-500 hover:to-ice-400 text-white font-display font-bold text-base sm:text-lg shadow-lg flex items-center justify-center gap-2 transition"
+          >
+            <span>New Order / Next Customer</span>
+            <span>❄️</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. MENU DATA (The Michoacana Lili + Frozen)
+    // ==========================================
+    const CATEGORIES = [
+      { id: 'all', label: 'All Treats', icon: '✨' },
+      { id: 'cones', label: 'Cones & Sundaes', icon: '🍦' },
+      { id: 'popsicles', label: 'Paletas & Pops', icon: '🍭' },
+      { id: 'toppers', label: 'Toppers & Sprinkles', icon: '👑' }
+    ];
+
+    const MENU_ITEMS = [
+      // Cones & Sundaes
+      {
+        id: 'elsa-cone',
+        category: 'cones',
+        name: 'Elsa Ice Blue Swirl Cone',
+        description: 'Frosty ice-blue vanilla soft-serve swirled high in a crispy waffle cone.',
+        price: 3.50,
+        badge: 'Frozen Favorite',
+        accent: 'from-sky-400 to-blue-600',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><polygon points="22,32 42,32 32,60" fill="#F59E0B" stroke="#B45309" stroke-width="2"/><path d="M25 38L36 48M39 38L28 48" stroke="#D97706" stroke-width="1.5"/><circle cx="32" cy="26" r="11" fill="#38BDF8"/><circle cx="32" cy="17" r="8" fill="#BAE6FD"/><circle cx="32" cy="10" r="4.5" fill="#F0F9FF"/><path d="M32 6V14M28 10H36M29.5 7.5L34.5 12.5M34.5 7.5L29.5 12.5" stroke="#0284C7" stroke-width="1.4" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'anna-cone',
+        category: 'cones',
+        name: 'Anna Berry Royal Cone',
+        description: 'Sweet royal berry & magenta cream scoops in a golden sugar cone.',
+        price: 3.50,
+        badge: 'Royal Sweet',
+        accent: 'from-purple-500 to-pink-500',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><polygon points="22,32 42,32 32,60" fill="#FBBF24" stroke="#B45309" stroke-width="2"/><circle cx="27" cy="27" r="9" fill="#C084FC"/><circle cx="37" cy="27" r="9" fill="#EC4899"/><circle cx="32" cy="18" r="9" fill="#9333EA"/><circle cx="32" cy="9" r="3.5" fill="#FDE047"/></svg>`
+      },
+      {
+        id: 'olaf-cup',
+        category: 'cones',
+        name: 'Olaf Snowball Cup',
+        description: 'Fluffy vanilla snowball scoops in a frosty cup with a carrot nose smile.',
+        price: 4.00,
+        badge: 'Warm Hugs!',
+        accent: 'from-cyan-400 to-sky-500',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><path d="M18 34H46L42 56H22L18 34Z" fill="#0284C7" stroke="#BAE6FD" stroke-width="2"/><circle cx="32" cy="27" r="11" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/><circle cx="32" cy="16" r="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/><circle cx="29" cy="14" r="1.5" fill="#1E293B"/><circle cx="35" cy="14" r="1.5" fill="#1E293B"/><polygon points="32,16 39,18 32,19" fill="#F97316"/></svg>`
+      },
+      {
+        id: 'fresas-crema',
+        category: 'cones',
+        name: 'Fresas con Crema Cup',
+        description: 'Classic Michoacana sweet cream layered with juicy red strawberries.',
+        price: 4.50,
+        badge: 'Michoacana Classic',
+        accent: 'from-pink-500 to-rose-500',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><path d="M18 30H46L42 56H22L18 30Z" fill="#FFF1F2" stroke="#EC4899" stroke-width="2"/><path d="M19 37H45L44 44H20L19 37Z" fill="#F43F5E"/><circle cx="26" cy="26" r="7" fill="#E11D48"/><circle cx="38" cy="26" r="7" fill="#FB7185"/><circle cx="32" cy="21" r="8" fill="#FFFFFF"/><circle cx="32" cy="13" r="4" fill="#E11D48"/><path d="M29 10L32 13L35 10" stroke="#16A34A" stroke-width="2" stroke-linecap="round"/></svg>`
+      },
+
+      // Paletas & Pops
+      {
+        id: 'snowflake-pop',
+        category: 'popsicles',
+        name: 'Snowflake Ice Pop',
+        description: 'Sparkling glacier-blue paleta stamped with a frosty snow crystal.',
+        price: 2.50,
+        badge: 'Icy Cool',
+        accent: 'from-sky-400 to-indigo-500',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><rect x="29" y="42" width="6" height="16" rx="3" fill="#FCD34D" stroke="#B45309" stroke-width="1.5"/><rect x="20" y="10" width="24" height="34" rx="12" fill="#38BDF8" stroke="#E0F2FE" stroke-width="2"/><path d="M32 19V35M24 27H40M26.5 21.5L37.5 32.5M37.5 21.5L26.5 32.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'strawberry-paleta',
+        category: 'popsicles',
+        name: 'Strawberry Paleta',
+        description: 'Creamy pink fresa paleta packed with real sweet strawberry slices.',
+        price: 2.50,
+        badge: 'Paletería Hit',
+        accent: 'from-pink-400 to-rose-600',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><rect x="29" y="42" width="6" height="16" rx="3" fill="#FCD34D" stroke="#B45309" stroke-width="1.5"/><rect x="20" y="10" width="24" height="34" rx="12" fill="#EC4899" stroke="#FBCFE8" stroke-width="2"/><circle cx="28" cy="21" r="3.5" fill="#BE123C"/><circle cx="36" cy="29" r="4" fill="#BE123C"/><circle cx="28" cy="35" r="3" fill="#FFE4E6"/></svg>`
+      },
+      {
+        id: 'mango-chamoy-pop',
+        category: 'popsicles',
+        name: 'Mango Chamoy Pop',
+        description: 'Sunny golden mango paleta swirled with tangy red chamoy ribbons!',
+        price: 3.00,
+        badge: 'Sweet & Tangy',
+        accent: 'from-amber-400 to-orange-500',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><rect x="29" y="42" width="6" height="16" rx="3" fill="#FCD34D" stroke="#B45309" stroke-width="1.5"/><rect x="20" y="10" width="24" height="34" rx="12" fill="#FBBF24" stroke="#FEF3C7" stroke-width="2"/><path d="M21 20C28 18 35 25 43 22M21 31C29 29 36 36 43 33" stroke="#DC2626" stroke-width="3.5" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'frosty-twin-pop',
+        category: 'popsicles',
+        name: 'Frosty Twin Pop',
+        description: 'Double-stick ice blue & royal purple paleta made for sharing.',
+        price: 2.75,
+        badge: 'Shareable',
+        accent: 'from-cyan-400 to-purple-500',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><rect x="23" y="42" width="5" height="16" rx="2.5" fill="#FCD34D" stroke="#B45309" stroke-width="1.5"/><rect x="36" y="42" width="5" height="16" rx="2.5" fill="#FCD34D" stroke="#B45309" stroke-width="1.5"/><path d="M18 22C18 15 23 10 30 10H32V44H18V22Z" fill="#38BDF8"/><path d="M32 10H34C41 10 46 15 46 22V44H32V10Z" fill="#A855F7"/><line x1="32" y1="10" x2="32" y2="44" stroke="#FFFFFF" stroke-width="1.5"/></svg>`
+      },
+
+      // Toppers & Sprinkles
+      {
+        id: 'elsa-anna-topper',
+        category: 'toppers',
+        name: 'Elsa & Anna Topper',
+        description: 'Sparkling royal tiara & snowflake clip-on topper for your treat!',
+        price: 1.00,
+        badge: 'Royal Topper',
+        accent: 'from-sky-400 to-purple-500',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><polygon points="12,44 17,22 26,34 32,14 38,34 47,22 52,44" fill="#38BDF8" stroke="#7C3AED" stroke-width="2" stroke-linejoin="round"/><circle cx="32" cy="13" r="3.5" fill="#EC4899"/><circle cx="17" cy="20" r="2.5" fill="#FDE047"/><circle cx="47" cy="20" r="2.5" fill="#FDE047"/><circle cx="32" cy="36" r="3" fill="#FFFFFF"/></svg>`
+      },
+      {
+        id: 'rainbow-snowflake-sprinkles',
+        category: 'toppers',
+        name: 'Rainbow & Snowflake Sprinkles',
+        description: 'A magical shake of colorful confetti & icy sugar snowflakes.',
+        price: 0.75,
+        badge: 'Add-On',
+        accent: 'from-pink-400 via-amber-300 to-sky-400',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><rect x="16" y="20" width="10" height="4" rx="2" transform="rotate(-25 16 20)" fill="#EC4899"/><rect x="38" y="18" width="10" height="4" rx="2" transform="rotate(20 38 18)" fill="#38BDF8"/><rect x="26" y="31" width="10" height="4" rx="2" transform="rotate(15 26 31)" fill="#FBBF24"/><rect x="16" y="42" width="10" height="4" rx="2" transform="rotate(35 16 42)" fill="#7C3AED"/><rect x="38" y="41" width="10" height="4" rx="2" transform="rotate(-30 38 41)" fill="#10B981"/></svg>`
+      },
+      {
+        id: 'whipped-snow-cherry',
+        category: 'toppers',
+        name: 'Whipped Snow & Cherry',
+        description: 'Fluffy swirl of sweet snow cream crowned with a bright red cherry.',
+        price: 1.00,
+        badge: 'Sweet Swirl',
+        accent: 'from-rose-400 to-pink-500',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><ellipse cx="32" cy="44" rx="18" ry="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/><ellipse cx="32" cy="36" rx="13" ry="7" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/><ellipse cx="32" cy="29" rx="8" ry="5" fill="#FFFFFF"/><circle cx="32" cy="21" r="5.5" fill="#E11D48"/><path d="M32 16C34 11 38 10 41 11" stroke="#16A34A" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`
+      },
+      {
+        id: 'gummy-chamoy-drizzle',
+        category: 'toppers',
+        name: 'Gummy Bears & Chamoy Drizzle',
+        description: 'Chewy fruity gummy bears topped with a sweet-tangy chamoy drizzle.',
+        price: 1.00,
+        badge: 'Michoacana Extra',
+        accent: 'from-red-500 to-amber-500',
+        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><circle cx="23" cy="25" r="5" fill="#F43F5E"/><ellipse cx="23" cy="35" rx="6" ry="7" fill="#F43F5E"/><circle cx="20" cy="21" r="2" fill="#F43F5E"/><circle cx="26" cy="21" r="2" fill="#F43F5E"/><circle cx="41" cy="27" r="5" fill="#10B981"/><ellipse cx="41" cy="37" rx="6" ry="7" fill="#10B981"/><circle cx="38" cy="23" r="2" fill="#10B981"/><circle cx="44" cy="23" r="2" fill="#10B981"/><path d="M14 48C22 44 42 52 50 47" stroke="#DC2626" stroke-width="4" stroke-linecap="round" fill="none"/></svg>`
+      }
+    ];
+
+    // ==========================================
+    // 2. APPLICATION STATE
+    // ==========================================
+    let activeCategory = 'all';
+    let cart = {}; // { itemId: quantity }
+    let soundEnabled = true;
+    let audioCtx = null;
+
+    // ==========================================
+    // 3. WEB AUDIO API MAGICAL SOUND EFFECTS
+    // ==========================================
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          audioCtx = new AudioContext();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function triggerHaptic(pattern = 25) {
+      if (navigator.vibrate) {
+        try { navigator.vibrate(pattern); } catch (e) {}
+      }
+    }
+
+    function playSparkleChime(pitchMultiplier = 1) {
+      if (!soundEnabled) return;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const notes = [523.25, 659.25, 783.99, 1046.50].map(f => f * pitchMultiplier);
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.055);
+
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + idx * 0.055);
+        gain.gain.exponentialRampToValueAtTime(0.14, ctx.currentTime + idx * 0.055 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.055 + 0.25);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + idx * 0.055);
+        osc.stop(ctx.currentTime + idx * 0.055 + 0.26);
+      });
+    }
+
+    function playIceCreamJingle() {
+      triggerHaptic([25, 40, 25]);
+      if (!soundEnabled) return;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+
+      const melody = [
+        { f: 523.25, t: 0.00, d: 0.16 },
+        { f: 659.25, t: 0.17, d: 0.16 },
+        { f: 783.99, t: 0.34, d: 0.16 },
+        { f: 659.25, t: 0.51, d: 0.16 },
+        { f: 880.00, t: 0.68, d: 0.22 },
+        { f: 783.99, t: 0.92, d: 0.35 }
+      ];
+
+      melody.forEach(note => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(note.f, ctx.currentTime + note.t);
+
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + note.t);
+        gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + note.t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + note.t + note.d);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + note.t);
+        osc.stop(ctx.currentTime + note.t + note.d + 0.02);
+      });
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const iconEl = document.getElementById('soundIcon');
+      if (iconEl) {
+        iconEl.textContent = soundEnabled ? '🔊' : '🔇';
+      }
+      triggerHaptic(15);
+      if (soundEnabled) playSparkleChime(1.1);
+    }
+
+    // ==========================================
+    // 4. RENDERING FUNCTIONS
+    // ==========================================
+    function formatMoney(amount) {
+      return '$' + amount.toFixed(2);
+    }
+
+    function renderCategories() {
+      const container = document.getElementById('categoryTabs');
+      if (!container) return;
+
+      container.innerHTML = CATEGORIES.map(cat => {
+        const isActive = cat.id === activeCategory;
+        return `
+          <button
+            onclick="selectCategory('${cat.id}')"
+            class="btn-bounce flex items-center gap-1.5 px-4 py-2.5 rounded-2xl font-display font-bold text-sm sm:text-base whitespace-nowrap transition border-2 ${
+              isActive
+                ? 'bg-pink-600 text-white border-pink-600 shadow-md'
+                : 'bg-ice-50 hover:bg-ice-100 text-slate-700 border-ice-200'
+            }"
+          >
+            <span>${cat.icon}</span>
+            <span>${cat.label}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderMenu() {
+      const grid = document.getElementById('menuGrid');
+      if (!grid) return;
+
+      const filtered = activeCategory === 'all'
+        ? MENU_ITEMS
+        : MENU_ITEMS.filter(item => item.category === activeCategory);
+
+      grid.innerHTML = filtered.map(item => {
+        const qty = cart[item.id] || 0;
+        return `
+          <article
+            id="card-${item.id}"
+            onclick="addToCart('${item.id}')"
+            role="button"
+            tabindex="0"
+            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();addToCart('${item.id}');}"
+            class="cursor-pointer bg-white rounded-3xl p-4 shadow-md hover:shadow-xl transition border-2 ${
+              qty > 0 ? 'border-pink-500 ring-2 ring-pink-200' : 'border-ice-200'
+            } flex flex-col justify-between relative"
+          >
+            ${qty > 0 ? `
+              <span class="absolute -top-2.5 -right-2.5 z-10 bg-pink-600 text-white font-display font-bold text-sm px-3 py-1 rounded-full shadow-md border-2 border-white">
+                ${qty} in tray
+              </span>
+            ` : ''}
+
+            <div>
+              <!-- Top Visual Stage -->
+              <div class="relative rounded-2xl bg-gradient-to-br ${item.accent} p-4 flex items-center justify-center mb-3 shadow-inner overflow-hidden">
+                <span class="absolute top-2.5 left-2.5 bg-white/95 text-slate-800 text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-sm">
+                  ${item.badge}
+                </span>
+                <span class="absolute bottom-2.5 right-2.5 bg-slate-900/80 text-white font-display font-bold text-base px-3 py-0.5 rounded-full backdrop-blur-sm">
+                  ${formatMoney(item.price)}
+                </span>
+                <div class="transform transition-transform duration-200 hover:scale-110 drop-shadow-md">
+                  ${item.svg}
+                </div>
+              </div>
+
+              <!-- Title & Description -->
+              <h3 class="font-display text-lg font-bold text-slate-800 leading-snug">
+                ${item.name}
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
+                ${item.description}
+              </p>
+            </div>
+
+            <!-- Interactive Add / Quantity Controls -->
+            <div class="mt-4 pt-3 border-t border-slate-100" onclick="event.stopPropagation()">
+              ${qty === 0 ? `
+                <button
+                  onclick="addToCart('${item.id}')"
+                  class="btn-bounce w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-pink-500 via-royal-600 to-ice-500 hover:from-pink-400 hover:to-ice-400 text-white font-display font-bold text-base shadow-sm flex items-center justify-center gap-2 transition"
+                >
+                  <span>+ Tap to Add</span>
+                </button>
+              ` : `
+                <div class="flex items-center justify-between bg-pink-50 border-2 border-pink-300 rounded-2xl p-1.5">
+                  <button
+                    onclick="updateQuantity('${item.id}', -1)"
+                    aria-label="Decrease quantity"
+                    class="btn-bounce w-11 h-11 rounded-xl bg-white hover:bg-rose-50 text-pink-700 hover:text-rose-600 font-display font-bold text-2xl shadow-sm border border-pink-200 flex items-center justify-center"
+                  >
+                    −
+                  </button>
+                  <div class="text-center">
+                    <span class="font-display font-bold text-xl text-royal-900">${qty}</span>
+                    <span class="block text-[10px] font-bold uppercase tracking-wider text-pink-600">In Tray</span>
+                  </div>
+                  <button
+                    onclick="updateQuantity('${item.id}', 1)"
+                    aria-label="Increase quantity"
+                    class="btn-bounce w-11 h-11 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-display font-bold text-2xl shadow-sm flex items-center justify-center"
+                  >
+                    +
+                  </button>
+                </div>
+              `}
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function updateCartTotalsUI() {
+      let totalCount = 0;
+      let totalAmount = 0;
+
+      Object.entries(cart).forEach(([id, qty]) => {
+        const item = MENU_ITEMS.find(i => i.id === id);
+        if (item && qty > 0) {
+          totalCount += qty;
+          totalAmount += item.price * qty;
+        }
+      });
+
+      const bottomCountEl = document.getElementById('bottomCartCount');
+      const bottomTotalEl = document.getElementById('bottomCartTotal');
+      const modalCountEl = document.getElementById('modalItemCount');
+      const modalTotalEl = document.getElementById('modalTotalAmount');
+
+      if (bottomCountEl) bottomCountEl.textContent = totalCount;
+      if (bottomTotalEl) bottomTotalEl.textContent = formatMoney(totalAmount);
+      if (modalCountEl) modalCountEl.textContent = `${totalCount} ${totalCount === 1 ? 'treat' : 'treats'}`;
+      if (modalTotalEl) modalTotalEl.textContent = formatMoney(totalAmount);
+
+      renderCartModalItems();
+    }
+
+    function renderCartModalItems() {
+      const container = document.getElementById('cartItemsContainer');
+      if (!container) return;
+
+      const entries = Object.entries(cart).filter(([_, qty]) => qty > 0);
+
+      if (entries.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 px-4">
+            <div class="text-5xl mb-3">🍦</div>
+            <h4 class="font-display text-xl font-bold text-slate-700">Your tray is empty!</h4>
+            <p class="text-sm text-slate-500 mt-1">Close this window and tap any yummy ice cream or paleta to add it.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = entries.map(([id, qty]) => {
+        const item = MENU_ITEMS.find(i => i.id === id);
+        if (!item) return '';
+        const lineTotal = item.price * qty;
+        return `
+          <div class="bg-white rounded-2xl p-3 shadow-sm border border-pink-200 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${item.accent} p-1.5 flex-shrink-0 flex items-center justify-center">
+                ${item.svg}
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-display font-bold text-slate-800 text-sm sm:text-base truncate">${item.name}</h4>
+                <p class="text-xs font-semibold text-pink-600">${formatMoney(item.price)} each • <span class="text-slate-700 font-bold">${formatMoney(lineTotal)}</span></p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              <button
+                onclick="updateQuantity('${item.id}', -1)"
+                class="btn-bounce w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-600 font-bold text-lg flex items-center justify-center"
+              >
+                −
+              </button>
+              <span class="w-6 text-center font-display font-bold text-base text-slate-800">${qty}</span>
+              <button
+                onclick="updateQuantity('${item.id}', 1)"
+                class="btn-bounce w-9 h-9 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-bold text-lg flex items-center justify-center"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ==========================================
+    // 5. USER INTERACTIONS & CART LOGIC
+    // ==========================================
+
+    // Blocks multi-touch pinch gestures on iOS Safari
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+    document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+
+    function selectCategory(catId) {
+      activeCategory = catId;
+      triggerHaptic(12);
+      renderCategories();
+      renderMenu();
+    }
+
+    function addToCart(itemId) {
+      cart[itemId] = (cart[itemId] || 0) + 1;
+      triggerHaptic(25);
+      playSparkleChime(1.0);
+      renderMenu();
+      updateCartTotalsUI();
+
+      const cardEl = document.getElementById(`card-${itemId}`);
+      if (cardEl) {
+        cardEl.classList.remove('card-pop');
+        void cardEl.offsetWidth;
+        cardEl.classList.add('card-pop');
+      }
+    }
+
+    function updateQuantity(itemId, delta) {
+      const current = cart[itemId] || 0;
+      const next = current + delta;
+      if (next <= 0) {
+        delete cart[itemId];
+      } else {
+        cart[itemId] = next;
+      }
+      triggerHaptic(18);
+      if (delta > 0) playSparkleChime(1.15);
+      renderMenu();
+      updateCartTotalsUI();
+    }
+
+    function clearCart() {
+      cart = {};
+      triggerHaptic([20, 30, 20]);
+      renderMenu();
+      updateCartTotalsUI();
+    }
+
+    function openCart() {
+      triggerHaptic(15);
+      renderCartModalItems();
+      const modal = document.getElementById('cartModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeCart() {
+      const modal = document.getElementById('cartModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function showNotice(msg) {
+      const msgEl = document.getElementById('noticeMessage');
+      const modal = document.getElementById('noticeModal');
+      if (msgEl) msgEl.textContent = msg;
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+
+    function closeNotice() {
+      const modal = document.getElementById('noticeModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function handleBottomCartClick() {
+      const totalItems = Object.values(cart).reduce((sum, q) => sum + q, 0);
+      if (totalItems === 0) {
+        triggerHaptic([30, 40, 30]);
+        showNotice('Your ice cream tray is empty! Tap any treat to add it.');
+        return;
+      }
+      openCart();
+    }
+
+    function handleCheckoutAttempt() {
+      const totalItems = Object.values(cart).reduce((sum, q) => sum + q, 0);
+      if (totalItems === 0) {
+        triggerHaptic([30, 40, 30]);
+        showNotice('Your ice cream tray is empty! Tap any treat to add it.');
+        return;
+      }
+      openCart();
+    }
+
+    function placeOrder() {
+      const entries = Object.entries(cart).filter(([_, qty]) => qty > 0);
+      if (entries.length === 0) {
+        closeCart();
+        showNotice('Your ice cream tray is empty! Tap any treat to add it.');
+        return;
+      }
+
+      closeCart();
+      triggerHaptic([30, 50, 30]);
+      playIceCreamJingle();
+
+      // Generate random order number (e.g., #LILI-104)
+      const randomNum = Math.floor(100 + Math.random() * 900);
+      const orderNumEl = document.getElementById('receiptOrderNumber');
+      if (orderNumEl) {
+        orderNumEl.textContent = `ORDER #LILI-${randomNum}`;
+      }
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const timestampEl = document.getElementById('receiptTimestamp');
+      if (timestampEl) {
+        timestampEl.textContent = `TODAY • ${timeStr}`;
+      }
+
+      let total = 0;
+      const receiptListEl = document.getElementById('receiptItemsList');
+      if (receiptListEl) {
+        receiptListEl.innerHTML = entries.map(([id, qty]) => {
+          const item = MENU_ITEMS.find(i => i.id === id);
+          if (!item) return '';
+          const lineTotal = item.price * qty;
+          total += lineTotal;
+          return `
+            <div class="flex items-start justify-between gap-2">
+              <div class="font-medium text-slate-700">
+                <span class="font-display font-bold text-pink-600 mr-1">${qty}×</span>
+                <span>${item.name}</span>
+              </div>
+              <span class="font-display font-bold text-slate-800 flex-shrink-0">${formatMoney(lineTotal)}</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      const receiptTotalEl = document.getElementById('receiptTotalAmount');
+      if (receiptTotalEl) {
+        receiptTotalEl.textContent = formatMoney(total);
+      }
+
+      const receiptModal = document.getElementById('receiptModal');
+      if (receiptModal) {
+        receiptModal.classList.remove('hidden');
+        receiptModal.classList.add('flex');
+      }
+    }
+
+    function finishOrderAndReset() {
+      const receiptModal = document.getElementById('receiptModal');
+      if (receiptModal) {
+        receiptModal.classList.add('hidden');
+        receiptModal.classList.remove('flex');
+      }
+      clearCart();
+      playSparkleChime(1.2);
+    }
+
+    // ==========================================
+    // 6. DECORATIVE SNOWFLAKES INITIALIZER
+    // ==========================================
+    function createSnowflakes() {
+      const layer = document.getElementById('snowLayer');
+      if (!layer) return;
+
+      const glyphs = ['❄️', '❅', '❆', '✨'];
+      const count = 32;
+
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'snowflake-bg';
+        el.textContent = glyphs[i % glyphs.length];
+        el.style.left = `${Math.random() * 100}%`;
+        el.style.fontSize = `${14 + Math.random() * 16}px`;
+        el.style.animationDuration = `${9 + Math.random() * 12}s`;
+        el.style.animationDelay = `${-Math.random() * 15}s`;
+        layer.appendChild(el);
+      }
+    }
+
+    // Safe initialization whether DOMContentLoaded has already fired or not
+    function initApp() {
+      createSnowflakes();
+      renderCategories();
+      renderMenu();
+      updateCartTotalsUI();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  </script>
+</body>
+</html>

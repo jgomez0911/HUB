@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#f472b6" />
+    </linearGradient>
+    <linearGradient id="card" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f8fafc" />
+    </linearGradient>
+    <filter id="softShadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#1e1b4b" flood-opacity="0.22" />
+    </filter>
+  </defs>
+
+  
+  <rect width="512" height="512" rx="115" fill="url(#bg)" />
+
+  
+  <circle cx="95" cy="95" r="46" fill="#ffffff" opacity="0.2" />
+  <circle cx="425" cy="415" r="64" fill="#fde047" opacity="0.25" />
+  <circle cx="410" cy="105" r="28" fill="#ffffff" opacity="0.22" />
+
+  
+  <rect x="86" y="128" width="340" height="256" rx="76" fill="url(#card)" filter="url(#softShadow)" />
+
+  
+  <path d="M130 330 C95 330 82 395 118 416 C146 432 178 396 196 365 Z" fill="#ffffff" />
+  <path d="M382 330 C417 330 430 395 394 416 C366 432 334 396 316 365 Z" fill="#ffffff" />
+
+  
+  <rect x="148" y="210" width="26" height="74" rx="10" fill="#fbbf24" />
+  <rect x="124" y="234" width="74" height="26" rx="10" fill="#fbbf24" />
+
+  
+  <circle cx="348" cy="222" r="16" fill="#ff5d8f" />
+  <circle cx="378" cy="252" r="16" fill="#38bdf8" />
+  <circle cx="348" cy="282" r="16" fill="#34d399" />
+  <circle cx="318" cy="252" r="16" fill="#a78bfa" />
+
+  
+  <circle cx="232" cy="242" r="11" fill="#232946" />
+  <circle cx="280" cy="242" r="11" fill="#232946" />
+  <circle cx="229" cy="238" r="4" fill="#ffffff" />
+  <circle cx="277" cy="238" r="4" fill="#ffffff" />
+  <path d="M242 264 Q256 280 270 264" fill="none" stroke="#ff5d8f" stroke-width="8" stroke-linecap="round" />
+
+  
+  <ellipse cx="216" cy="258" rx="10" ry="6" fill="#fda4af" opacity="0.7" />
+  <ellipse cx="296" cy="258" rx="10" ry="6" fill="#fda4af" opacity="0.7" />
+
+  
+  <path d="M256 44 L268 74 L298 86 L268 98 L256 128 L244 98 L214 86 L244 74 Z" fill="#fde047" />
+</svg>
