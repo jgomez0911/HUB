@@ -1,1053 +1,2143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>The Michoacana Lili — Pretend Play Menu</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>The Michoacana Lili — 3D Ice Cream Shop</title>
+
+  <!-- Tailwind CSS & Three.js r128 -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Kid-Friendly Rounded Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
             display: ['Fredoka', 'sans-serif'],
-            sans: ['Inter', 'sans-serif'],
-          },
-          colors: {
-            ice: {
-              50: '#f0f9ff',
-              100: '#e0f2fe',
-              200: '#bae6fd',
-              300: '#7dd3fc',
-              400: '#38bdf8',
-              500: '#0ea5e9',
-              600: '#0284c7',
-            },
-            royal: {
-              50: '#faf5ff',
-              100: '#f3e8ff',
-              200: '#e9d5ff',
-              500: '#a855f7',
-              600: '#9333ea',
-              700: '#7e22ce',
-              800: '#6b21a8',
-            }
+            sans: ['Nunito', 'sans-serif']
           }
         }
       }
-    }
+    };
   </script>
+
   <style>
+    /* =========================================================================
+       1. VIEWPORT LOCK, SCROLLBAR HIDING & STRICT 4-ROW APP SHELL
+       ========================================================================= */
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      touch-action: pan-x pan-y;
+      overscroll-behavior: none;
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(150deg, #fce7f3 0%, #e0f2fe 50%, #f3e8ff 100%);
+      color: #1e293b;
+    }
+
     * {
+      box-sizing: border-box;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
-      -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;     /* Firefox */
+      -webkit-user-select: none;
     }
 
     *::-webkit-scrollbar {
-        display: none;             /* Chrome, Safari, iOS Safari, Opera */
-    }
-
-    html, body {
-        touch-action: pan-x pan-y; /* Allows normal scrolling, blocks pinch-zoom */
-        overscroll-behavior: none; /* Prevents rubber-band bounce on iOS/Android */
-    }
-
-    body {
-      background: linear-gradient(160deg, #fce7f3 0%, #e0f2fe 48%, #f3e8ff 100%);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* Subtle floating snowflakes background */
-    .snowflake-bg {
-      position: fixed;
-      top: -10%;
-      color: rgba(255, 255, 255, 0.75);
-      pointer-events: none;
-      z-index: 0;
-      animation: fall linear infinite;
-    }
-
-    @keyframes fall {
-      0% { transform: translateY(-5vh) rotate(0deg); opacity: 0; }
-      15% { opacity: 0.9; }
-      85% { opacity: 0.9; }
-      100% { transform: translateY(108vh) rotate(360deg); opacity: 0; }
-    }
-
-    /* Hide scrollbar on category strip while allowing touch scroll */
-    .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      height: 100dvh;
+      width: 100vw;
+      overflow: hidden;
     }
 
-    /* Receipt zigzag edge effect */
-    .receipt-edge {
-      background-image: radial-gradient(circle at 10px 0, transparent 0, transparent 7px, #ffffff 8px);
-      background-size: 20px 14px;
-      background-repeat: repeat-x;
+    .split-main {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      padding: 12px;
+      overflow: hidden;
     }
 
-    /* Stamp animation */
+    .left-pane {
+      width: 48%;
+      min-width: 310px;
+      height: 100%;
+      overflow-y: auto;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border-radius: 24px;
+      border: 2px solid #fbcfe8;
+      box-shadow: 0 10px 26px rgba(139, 92, 246, 0.10);
+    }
+
+    .right-pane {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 2px solid #bae6fd;
+      background: linear-gradient(180deg, #e0f2fe 0%, #fdf2f8 55%, #ede9fe 100%);
+      box-shadow: 0 10px 26px rgba(14, 165, 233, 0.12);
+    }
+
+    /* Compact phone fallback (keeps side-by-side on iPad portrait 768px & landscape 1024px+) */
+    @media (max-width: 680px) {
+      .split-main {
+        flex-direction: column;
+        padding: 8px;
+        gap: 8px;
+      }
+      .left-pane {
+        width: 100%;
+        min-width: 0;
+        height: 48%;
+        padding: 10px;
+      }
+      .right-pane {
+        height: 52%;
+      }
+    }
+
+    #stageCanvasMount {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    #stageCanvasMount:active {
+      cursor: grabbing;
+    }
+
+    /* Fixed Overlays / Modals: strictly hidden by default so they never shift layout */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.62);
+      backdrop-filter: blur(5px);
+      padding: 16px;
+    }
+
+    .modal-backdrop.is-open {
+      display: flex;
+    }
+
+    .tray-sheet {
+      width: 100%;
+      max-width: 520px;
+      max-height: 90dvh;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+      border-radius: 28px;
+      border: 4px solid #f9a8d4;
+      overflow: hidden;
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.35);
+    }
+
+    /* Interactive Bounce & Stamp Animations */
+    .btn-pop {
+      transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    }
+    .btn-pop:active {
+      transform: scale(0.95);
+    }
+
     @keyframes stampPop {
-      0% { transform: scale(2.2) rotate(-18deg); opacity: 0; }
-      65% { transform: scale(0.92) rotate(-10deg); opacity: 1; }
-      100% { transform: scale(1) rotate(-12deg); opacity: 1; }
+      0% { transform: scale(2.1) rotate(-18deg); opacity: 0; }
+      65% { transform: scale(0.92) rotate(-9deg); opacity: 1; }
+      100% { transform: scale(1) rotate(-11deg); opacity: 1; }
     }
-
     .paid-stamp {
       animation: stampPop 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
-    /* Button press bounce */
-    .btn-bounce:active {
-      transform: scale(0.95);
+    @keyframes toastFloat {
+      0% { transform: translate(-50%, 14px) scale(0.92); opacity: 0; }
+      15% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+      85% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+      100% { transform: translate(-50%, -10px) scale(0.96); opacity: 0; }
     }
-
-    /* Card tap pop feedback */
-    @keyframes cardPop {
-      0% { transform: scale(1); }
-      45% { transform: scale(0.96); }
-      100% { transform: scale(1); }
-    }
-
-    .card-pop {
-      animation: cardPop 0.24s ease-out;
+    .toast-pill {
+      animation: toastFloat 2.1s ease forwards;
     }
   </style>
 </head>
-<body class="font-sans text-slate-800 pb-28">
+<body>
 
-  <!-- Decorative Snowflakes Container -->
-  <div id="snowLayer" aria-hidden="true"></div>
+  <!-- =========================================================================
+       4-ROW VERTICAL FLEX APP SHELL
+       ========================================================================= -->
+  <div class="app-shell">
 
-  <!-- Top Sticky Header -->
-  <header class="sticky top-0 z-30 bg-gradient-to-r from-pink-600 via-royal-700 to-ice-600 text-white shadow-lg border-b-4 border-pink-200">
-    <div class="max-w-4xl mx-auto px-3 sm:px-5 py-3 flex items-center justify-between gap-2">
-      <!-- Brand / Custom Frozen + Michoacana Ice Cream Kart SVG -->
-      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/95 p-1.5 shadow-md flex-shrink-0 flex items-center justify-center border-2 border-pink-200">
-          <!-- Custom SVG of the Pink/Purple/Ice-Blue Frozen Michoacana Kart -->
-          <svg viewBox="0 0 80 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Canopy Umbrella -->
-            <path d="M12 24C12 13 24 7 40 7C56 7 68 13 68 24H12Z" fill="#EC4899"/>
-            <path d="M24 24C24 13 31 7 40 7C49 7 56 13 56 24H24Z" fill="#38BDF8"/>
-            <path d="M34 24C34 13 36.5 7 40 7C43.5 7 46 13 46 24H34Z" fill="#FAF5FF"/>
-            <!-- Canopy Scallops -->
-            <path d="M12 24Q19 29 26 24Q33 29 40 24Q47 29 54 24Q61 29 68 24" stroke="#FDE047" stroke-width="2.5" stroke-linecap="round"/>
-            <!-- Poles -->
-            <rect x="21" y="24" width="3" height="18" rx="1.5" fill="#E0F2FE"/>
-            <rect x="56" y="24" width="3" height="18" rx="1.5" fill="#E0F2FE"/>
-            <!-- Ice Cream Cone Sign on Top -->
-            <polygon points="36,3 44,3 40,10" fill="#F59E0B"/>
-            <circle cx="40" cy="3" r="3.5" fill="#F472B6"/>
-            <!-- Kart Body -->
-            <rect x="14" y="40" width="52" height="22" rx="8" fill="#9333EA" stroke="#FBCFE8" stroke-width="2"/>
-            <rect x="18" y="44" width="44" height="10" rx="4" fill="#38BDF8"/>
-            <!-- Snowflake Emblem -->
-            <circle cx="40" cy="49" r="5" fill="#FFFFFF"/>
-            <path d="M40 45V53M36 49H44M37.5 46.5L42.5 51.5M42.5 46.5L37.5 51.5" stroke="#DB2777" stroke-width="1.4" stroke-linecap="round"/>
-            <!-- Wheels -->
-            <circle cx="25" cy="64" r="8" fill="#1E293B" stroke="#BAE6FD" stroke-width="2.5"/>
-            <circle cx="25" cy="64" r="3" fill="#FDE047"/>
-            <circle cx="55" cy="64" r="8" fill="#1E293B" stroke="#BAE6FD" stroke-width="2.5"/>
-            <circle cx="55" cy="64" r="3" fill="#FDE047"/>
-          </svg>
-        </div>
-        <div class="truncate">
-          <div class="flex items-center gap-1.5">
-            <span class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider bg-amber-300 text-royal-900 px-2 py-0.5 rounded-full shadow-sm">
-              ❄️ Paletería & Frozen Kart
-            </span>
-          </div>
-          <h1 class="font-display text-lg sm:text-2xl font-bold leading-tight tracking-tight drop-shadow-sm truncate mt-0.5">
-            La Michoacana Lili
-          </h1>
-        </div>
-      </div>
-
-      <!-- Header Action: Sound Toggle Only (Single Cart Button lives at the bottom) -->
-      <div class="flex items-center gap-2 flex-shrink-0">
-        <button
-          id="soundToggleBtn"
-          onclick="toggleSound()"
-          aria-label="Toggle Magical Sound Effects"
-          class="btn-bounce p-2.5 sm:p-3 rounded-2xl bg-white/15 hover:bg-white/25 border border-white/30 text-white transition flex items-center justify-center shadow-sm"
-          title="Toggle Sound Effects"
-        >
-          <span id="soundIcon" class="text-xl leading-none">🔊</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Category Filter Bar -->
-    <nav class="bg-white/95 backdrop-blur-md border-t border-pink-200 px-3 py-2.5">
-      <div id="categoryTabs" class="max-w-4xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar">
-        <!-- Populated dynamically via JS -->
-      </div>
-    </nav>
-  </header>
-
-  <!-- Main Content Area -->
-  <main class="relative z-10 max-w-4xl mx-auto px-3 sm:px-5 pt-4 sm:pt-6">
-    <!-- Welcome / Kid-Friendly Prompt Banner -->
-    <div class="bg-white/90 backdrop-blur-sm rounded-3xl p-4 sm:p-5 mb-5 shadow-md border-2 border-pink-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-200 via-ice-200 to-royal-200 flex items-center justify-center text-2xl sm:text-3xl shadow-inner flex-shrink-0">
-          👑
-        </div>
-        <div>
-          <h2 class="font-display text-lg sm:text-xl font-bold text-royal-800">
-            Welcome to The Michoacana Lili!
-          </h2>
-          <p class="text-xs sm:text-sm text-slate-600 font-medium">
-            Tap any frosty cone, paleta popsicle, or magical topper to add it to your tray!
-          </p>
-        </div>
-      </div>
-      <button
-        onclick="playIceCreamJingle()"
-        class="btn-bounce self-end sm:self-center flex items-center gap-1.5 bg-pink-100 hover:bg-pink-200 text-pink-800 font-display font-semibold text-xs sm:text-sm px-3.5 py-2 rounded-xl border border-pink-300 transition"
-      >
-        <span>🎶</span>
-        <span>Ring Kart Bell</span>
-      </button>
-    </div>
-
-    <!-- Menu Grid -->
-    <section id="menuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- Menu item cards rendered dynamically via JS -->
-    </section>
-  </main>
-
-  <!-- Single Sticky Bottom Cart & Checkout Bar -->
-  <div class="fixed bottom-0 inset-x-0 z-30 p-3 sm:p-4 bg-gradient-to-t from-royal-900/95 via-royal-900/80 to-transparent pointer-events-none">
-    <div class="max-w-4xl mx-auto pointer-events-auto">
-      <div class="bg-white rounded-3xl p-3 sm:p-3.5 shadow-2xl border-2 border-pink-300 flex items-center justify-between gap-3">
-        <button
-          onclick="handleBottomCartClick()"
-          class="btn-bounce flex items-center gap-3 text-left flex-1 min-w-0 px-2 py-1 rounded-2xl hover:bg-pink-50 transition"
-        >
-          <div class="relative bg-gradient-to-br from-pink-100 to-ice-100 text-royal-700 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 border border-pink-200">
-            🛒
-            <span
-              id="bottomCartCount"
-              class="absolute -top-1.5 -right-1.5 bg-pink-600 text-white text-xs font-extrabold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow"
-            >
-              0
-            </span>
+    <!-- ROW A: COMPACT TOP HEADER (NO CART BUTTON HERE) -->
+    <header class="flex-shrink-0 bg-gradient-to-r from-pink-500 via-purple-600 to-sky-500 text-white shadow-md border-b-2 border-pink-200 px-3 sm:px-5 py-2">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <!-- Cute Ice Cream Kart / Cone Emblem -->
+          <div class="w-10 h-10 rounded-2xl bg-white/95 border-2 border-pink-200 shadow-sm flex items-center justify-center flex-shrink-0">
+            <svg viewBox="0 0 40 40" class="w-8 h-8" aria-hidden="true">
+              <rect x="6" y="16" width="28" height="14" rx="4" fill="#38bdf8"/>
+              <path d="M4 16 C4 10 36 10 36 16 Z" fill="#f472b6"/>
+              <rect x="10" y="16" width="5" height="6" rx="2" fill="#ffffff" opacity="0.7"/>
+              <rect x="25" y="16" width="5" height="6" rx="2" fill="#ffffff" opacity="0.7"/>
+              <circle cx="13" cy="32" r="4" fill="#4c1d95"/>
+              <circle cx="27" cy="32" r="4" fill="#4c1d95"/>
+              <circle cx="13" cy="32" r="1.6" fill="#fde047"/>
+              <circle cx="27" cy="32" r="1.6" fill="#fde047"/>
+              <circle cx="20" cy="8" r="4.5" fill="#fdf2f8" stroke="#a855f7" stroke-width="1.5"/>
+            </svg>
           </div>
           <div class="truncate">
-            <p class="text-xs font-bold uppercase tracking-wider text-pink-600">View Tray</p>
-            <p id="bottomCartTotal" class="font-display text-xl sm:text-2xl font-bold text-royal-800 leading-none mt-0.5">
-              $0.00
+            <h1 class="font-display text-lg sm:text-2xl font-bold leading-tight tracking-wide truncate">
+              The Michoacana Lili
+            </h1>
+            <p class="text-[11px] font-extrabold text-sky-100 leading-none hidden sm:block">
+              ❄️ Frozen 3D Ice Cream &amp; Paleta Shop
             </p>
           </div>
-        </button>
+        </div>
 
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onclick="playKartBell()"
+            class="btn-pop px-3 py-1.5 rounded-xl bg-amber-300 hover:bg-amber-200 text-purple-950 font-display font-bold text-xs sm:text-sm border border-amber-400 shadow-sm flex items-center gap-1"
+            title="Ring Kart Bell"
+          >
+            <span>🔔</span>
+            <span class="hidden sm:inline">Ring Bell</span>
+          </button>
+          <button
+            type="button"
+            onclick="toggleSound()"
+            aria-label="Toggle Sound"
+            class="btn-pop w-9 h-9 rounded-xl bg-white/20 hover:bg-white/30 border border-white/30 flex items-center justify-center text-base"
+          >
+            <span id="soundIcon">🔊</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ROW B: PRIMARY MODE SELECTOR BAR (VERY FIRST SELECTOR) -->
+    <nav class="flex-shrink-0 bg-white/90 backdrop-blur-md border-b-2 border-pink-100 px-3 sm:px-5 py-2 shadow-sm">
+      <div class="max-w-3xl mx-auto grid grid-cols-2 gap-2.5">
         <button
-          onclick="handleCheckoutAttempt()"
-          class="btn-bounce bg-gradient-to-r from-pink-600 via-royal-600 to-ice-500 hover:from-pink-500 hover:to-ice-400 text-white font-display font-bold text-base sm:text-lg px-5 sm:px-7 py-3.5 rounded-2xl shadow-lg border-2 border-white/50 flex items-center gap-2 flex-shrink-0 transition"
+          id="tabSundae"
+          type="button"
+          onclick="switchMode('sundae')"
+          class="btn-pop py-2.5 px-4 rounded-2xl font-display font-bold text-sm sm:text-lg flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md border-2 border-pink-300"
         >
-          <span>View Tray</span>
-          <span>✨</span>
+          <span>🍨</span>
+          <span>Cup &amp; Cone Builder</span>
+        </button>
+        <button
+          id="tabPopsicle"
+          type="button"
+          onclick="switchMode('popsicle')"
+          class="btn-pop py-2.5 px-4 rounded-2xl font-display font-bold text-sm sm:text-lg flex items-center justify-center gap-2 bg-sky-50 hover:bg-sky-100 text-sky-900 border-2 border-sky-200"
+        >
+          <span>🍡</span>
+          <span>Popsicles</span>
         </button>
       </div>
+    </nav>
+
+    <!-- ROW C: SPLIT MAIN WORKSPACE (LEFT SELECTORS / RIGHT 3D STAGE) -->
+    <main class="split-main">
+
+      <!-- LEFT PANE (48% width, scrollable) -->
+      <section class="left-pane">
+
+        <!-- MODE 1: CUP & CONE BUILDER -->
+        <div id="sundaeBuilderView" class="space-y-4">
+
+          <!-- Step 1: Base -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="font-display text-base sm:text-lg font-bold text-purple-900">1. Choose Base</h2>
+              <span class="text-[11px] font-extrabold bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full">
+                $3.00 • 1st scoop free
+              </span>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button
+                id="btnBase-cup"
+                type="button"
+                onclick="selectBase('cup')"
+                class="btn-pop p-3 rounded-2xl border-2 border-slate-200 bg-white text-left flex items-center gap-2.5 shadow-sm"
+              >
+                <span class="w-10 h-10 rounded-2xl bg-purple-100 border-2 border-purple-300 flex items-center justify-center text-2xl flex-shrink-0">❄️</span>
+                <div class="min-w-0">
+                  <p class="font-display font-bold text-sm sm:text-base text-slate-800 leading-tight">Snowflake Cup</p>
+                  <p class="text-[11px] font-bold text-purple-600">White &amp; Purple</p>
+                </div>
+              </button>
+
+              <button
+                id="btnBase-cone"
+                type="button"
+                onclick="selectBase('cone')"
+                class="btn-pop p-3 rounded-2xl border-2 border-slate-200 bg-white text-left flex items-center gap-2.5 shadow-sm"
+              >
+                <span class="w-10 h-10 rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-2xl flex-shrink-0">🧇</span>
+                <div class="min-w-0">
+                  <p class="font-display font-bold text-sm sm:text-base text-slate-800 leading-tight">Waffle Cone</p>
+                  <p class="text-[11px] font-bold text-amber-700">Frozen Band</p>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2: Flavors (Stackable up to 6; 1st free, extra +$1) -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="font-display text-base sm:text-lg font-bold text-purple-900">2. Stack Flavors</h2>
+              <span id="scoopCounterBadge" class="text-[11px] font-extrabold bg-pink-100 text-pink-700 px-2.5 py-0.5 rounded-full">
+                0 / 6 Scoops (+$1 extra)
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onclick="addScoop('vanilla')"
+                class="btn-pop p-2.5 rounded-2xl border-2 border-slate-200 hover:border-sky-400 bg-slate-50/70 flex items-center gap-2.5 shadow-sm"
+              >
+                <span class="w-8 h-8 rounded-full border-2 border-slate-300 shadow-inner flex-shrink-0" style="background:#fffdf7;"></span>
+                <div class="text-left">
+                  <p class="font-display font-bold text-sm text-slate-800 leading-tight">Vanilla</p>
+                  <p class="text-[10px] font-extrabold text-slate-500">+ Stack Scoop</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onclick="addScoop('chocolate')"
+                class="btn-pop p-2.5 rounded-2xl border-2 border-amber-900/25 hover:border-amber-800 bg-amber-50/50 flex items-center gap-2.5 shadow-sm"
+              >
+                <span class="w-8 h-8 rounded-full border-2 border-amber-950 shadow-inner flex-shrink-0" style="background:#4a2511;"></span>
+                <div class="text-left">
+                  <p class="font-display font-bold text-sm text-slate-800 leading-tight">Chocolate</p>
+                  <p class="text-[10px] font-extrabold text-amber-900">+ Stack Scoop</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onclick="addScoop('mint')"
+                class="btn-pop p-2.5 rounded-2xl border-2 border-teal-200 hover:border-teal-400 bg-teal-50/60 flex items-center gap-2.5 shadow-sm"
+              >
+                <span class="w-8 h-8 rounded-full border-2 border-teal-400 shadow-inner flex-shrink-0" style="background:#5eead4;"></span>
+                <div class="text-left">
+                  <p class="font-display font-bold text-sm text-slate-800 leading-tight">Mint</p>
+                  <p class="text-[10px] font-extrabold text-teal-700">+ Stack Scoop</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onclick="addScoop('strawberry')"
+                class="btn-pop p-2.5 rounded-2xl border-2 border-pink-200 hover:border-pink-500 bg-pink-50/60 flex items-center gap-2.5 shadow-sm"
+              >
+                <span class="w-8 h-8 rounded-full border-2 border-pink-600 shadow-inner flex-shrink-0" style="background:#ff2e88;"></span>
+                <div class="text-left">
+                  <p class="font-display font-bold text-sm text-slate-800 leading-tight">Strawberry</p>
+                  <p class="text-[10px] font-extrabold text-pink-700">+ Stack Scoop</p>
+                </div>
+              </button>
+            </div>
+
+            <!-- Active Scoop Stack Chips + Undo Scoop Button -->
+            <div id="scoopStackBox" class="hidden mt-2.5 p-2.5 rounded-2xl bg-sky-50/90 border border-sky-200">
+              <div class="flex items-center justify-between gap-2 mb-1.5">
+                <span class="text-[11px] font-extrabold text-sky-900 uppercase tracking-wide">Your Scoop Stack</span>
+                <button
+                  type="button"
+                  onclick="undoScoop()"
+                  class="btn-pop text-xs font-extrabold text-rose-600 bg-white hover:bg-rose-50 px-2.5 py-1 rounded-xl border border-rose-200 shadow-sm"
+                >
+                  ↩ Undo Scoop
+                </button>
+              </div>
+              <div id="scoopStackChips" class="flex flex-wrap gap-1.5"></div>
+            </div>
+          </div>
+
+          <!-- Step 3: Drippers (+$1.00, optional, tap again to remove) -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="font-display text-base sm:text-lg font-bold text-purple-900">
+                3. Dripper <span class="text-xs font-extrabold text-pink-600">(+$1.00)</span>
+              </h2>
+              <span class="text-[11px] font-bold text-slate-400">Tap again to remove</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <button
+                id="btnDrip-chocolate"
+                type="button"
+                onclick="toggleDripper('chocolate')"
+                class="btn-pop p-2.5 rounded-2xl border-2 border-slate-200 bg-white text-center shadow-sm"
+              >
+                <span class="block w-9 h-6 mx-auto rounded-t-full border-b-4 border-dotted mb-1.5" style="background:#3b1d0d; border-color:#3b1d0d;"></span>
+                <p class="font-display font-bold text-xs sm:text-sm text-slate-800 leading-tight">Chocolate Drip</p>
+                <p class="text-[10px] font-bold text-slate-500">+$1.00</p>
+              </button>
+
+              <button
+                id="btnDrip-strawberry"
+                type="button"
+                onclick="toggleDripper('strawberry')"
+                class="btn-pop p-2.5 rounded-2xl border-2 border-slate-200 bg-white text-center shadow-sm"
+              >
+                <span class="block w-9 h-6 mx-auto rounded-t-full border-b-4 border-dotted mb-1.5" style="background:#ff2478; border-color:#ff2478;"></span>
+                <p class="font-display font-bold text-xs sm:text-sm text-slate-800 leading-tight">Strawberry Drip</p>
+                <p class="text-[10px] font-bold text-slate-500">+$1.00</p>
+              </button>
+
+              <button
+                id="btnDrip-frostberry"
+                type="button"
+                onclick="toggleDripper('frostberry')"
+                class="btn-pop p-2.5 rounded-2xl border-2 border-slate-200 bg-white text-center shadow-sm"
+              >
+                <span class="block w-9 h-6 mx-auto rounded-t-full border-b-4 border-dotted mb-1.5" style="background:#8b5cf6; border-color:#8b5cf6;"></span>
+                <p class="font-display font-bold text-xs sm:text-sm text-slate-800 leading-tight">Purple Frostberry</p>
+                <p class="text-[10px] font-bold text-purple-600">+$1.00</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 4: Toppers (+$1.00, optional, tap again to remove) -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="font-display text-base sm:text-lg font-bold text-purple-900">
+                4. Topper <span class="text-xs font-extrabold text-pink-600">(+$1.00)</span>
+              </h2>
+              <span class="text-[11px] font-bold text-slate-400">Tap again to remove</span>
+            </div>
+            <div id="topperGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+          </div>
+        </div>
+
+        <!-- MODE 2: POPSICLES ($2.00 EACH) -->
+        <div id="popsicleBuilderView" class="hidden space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="font-display text-base sm:text-lg font-bold text-purple-900">Choose a Popsicle</h2>
+            <span class="text-xs font-extrabold bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full">
+              $2.00 each
+            </span>
+          </div>
+          <div id="popsicleGrid" class="grid grid-cols-2 gap-2.5"></div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT PANE (52% width, Live 3D Stage + Floating Controls & Add-to-Tray Bar) -->
+      <section class="right-pane">
+
+        <!-- Floating Top-Right Control Pill (Auto-Spin + Clear/Reset) -->
+        <div class="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-md border border-sky-200">
+          <button
+            id="autoSpinBtn"
+            type="button"
+            onclick="toggleAutoSpin()"
+            class="btn-pop px-3 py-1 rounded-full bg-purple-100 hover:bg-purple-200 text-purple-900 font-display font-bold text-xs flex items-center gap-1"
+          >
+            <span>🔄</span>
+            <span id="autoSpinLabel">Spin: ON</span>
+          </button>
+          <button
+            type="button"
+            onclick="clearCurrentBuild()"
+            class="btn-pop px-3 py-1 rounded-full bg-rose-100 hover:bg-rose-200 text-rose-700 font-display font-bold text-xs"
+          >
+            Reset
+          </button>
+        </div>
+
+        <!-- Subtle Drag Hint (Top-Left) -->
+        <div class="absolute top-3 left-3 z-20 pointer-events-none hidden md:block">
+          <span class="px-3 py-1.5 rounded-full bg-white/80 text-[11px] font-extrabold text-sky-900 border border-sky-200 shadow-sm">
+            👆 Drag to spin 3D
+          </span>
+        </div>
+
+        <!-- Empty Stage Overlay Hint -->
+        <div
+          id="emptyStageOverlay"
+          class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-4 pb-20 transition-opacity duration-300"
+        >
+          <div class="bg-white/88 backdrop-blur-md px-5 py-3.5 rounded-3xl border-2 border-pink-200 shadow-lg text-center max-w-xs">
+            <p class="text-3xl mb-1">✨🍨✨</p>
+            <p id="emptyOverlayTitle" class="font-display font-bold text-base sm:text-lg text-purple-900 leading-snug">
+              Tap a Cup or Cone to start!
+            </p>
+            <p class="text-xs font-bold text-slate-500 mt-0.5">
+              Your 3D treat will build right here
+            </p>
+          </div>
+        </div>
+
+        <!-- Three.js WebGL Canvas Mount -->
+        <div id="stageCanvasMount"></div>
+
+        <!-- Floating Bottom Action Bar inside Right Pane (Live Price + Add to Tray) -->
+        <div class="absolute bottom-3 inset-x-3 z-20">
+          <div class="bg-white/94 backdrop-blur-md rounded-2xl p-2.5 sm:p-3 shadow-xl border-2 border-pink-200 flex items-center justify-between gap-3">
+            <div class="min-w-0 pl-1">
+              <p class="text-[10px] font-extrabold uppercase tracking-wider text-pink-600 leading-none">Current Treat</p>
+              <p id="liveItemPrice" class="font-display text-xl sm:text-2xl font-bold text-purple-950 leading-tight">$0.00</p>
+              <p id="livePriceNote" class="text-[10px] sm:text-[11px] font-bold text-slate-500 truncate">
+                Base $3.00 includes 1st scoop
+              </p>
+            </div>
+            <button
+              id="addToTrayBtn"
+              type="button"
+              onclick="addCurrentToTray()"
+              class="btn-pop flex-shrink-0 px-4 sm:px-6 py-3 rounded-2xl font-display font-bold text-sm sm:text-base bg-slate-200 text-slate-500 shadow-sm"
+            >
+              ➕ Add to Tray
+            </button>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+    <!-- ROW D: SINGLE BOTTOM CART / TRAY BAR (ONLY CART BUTTON IN THE ENTIRE APP) -->
+    <footer class="flex-shrink-0 bg-white/95 backdrop-blur-md border-t-2 border-pink-200 px-3 sm:px-5 py-2.5 shadow-inner">
+      <div class="max-w-4xl mx-auto">
+        <button
+          type="button"
+          onclick="openTrayOrEmptyNotice()"
+          class="btn-pop w-full bg-gradient-to-r from-pink-50 via-purple-50 to-sky-50 hover:from-pink-100 hover:to-sky-100 rounded-2xl p-2 sm:p-2.5 border-2 border-pink-300 shadow-md flex items-center justify-between gap-3"
+        >
+          <div class="flex items-center gap-3 pl-1">
+            <div class="relative w-11 h-11 rounded-2xl bg-white text-purple-800 flex items-center justify-center text-2xl border-2 border-pink-200 shadow-sm">
+              🛒
+              <span
+                id="trayBadgeCount"
+                class="absolute -top-2 -right-2 bg-pink-600 text-white text-xs font-extrabold min-w-[24px] h-6 px-1.5 rounded-full flex items-center justify-center border-2 border-white shadow"
+              >
+                0
+              </span>
+            </div>
+            <div class="text-left">
+              <p class="text-[11px] font-extrabold uppercase tracking-wider text-pink-600 leading-none">Order Tray</p>
+              <p id="traySubtotalBar" class="font-display text-xl sm:text-2xl font-bold text-purple-950 leading-tight">$0.00</p>
+            </div>
+          </div>
+
+          <span class="bg-gradient-to-r from-pink-500 via-purple-600 to-sky-500 text-white font-display font-bold text-sm sm:text-lg px-5 sm:px-7 py-2.5 rounded-2xl shadow-md">
+            🛒 View Tray
+          </span>
+        </button>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Floating Toast Feedback -->
+  <div id="toastHost" class="fixed bottom-24 left-1/2 z-[1100] pointer-events-none"></div>
+
+  <!-- =========================================================================
+       MODAL 1: CUTE NOTICE DIALOG (NO alert())
+       ========================================================================= -->
+  <div id="noticeModal" class="modal-backdrop" onclick="if(event.target === this) closeNotice()">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl border-4 border-pink-300 p-6 text-center space-y-4">
+      <div id="noticeEmoji" class="text-5xl">⛄</div>
+      <div>
+        <h3 id="noticeTitle" class="font-display text-2xl font-bold text-purple-900">Notice</h3>
+        <p id="noticeText" class="text-slate-600 font-bold text-sm mt-1"></p>
+      </div>
+      <button
+        type="button"
+        onclick="closeNotice()"
+        class="btn-pop w-full py-3 rounded-2xl bg-gradient-to-r from-pink-500 via-purple-600 to-sky-500 text-white font-display font-bold text-lg shadow-md"
+      >
+        Okay! 🍨
+      </button>
     </div>
   </div>
 
-  <!-- CART DRAWER / MODAL -->
-  <div
-    id="cartModal"
-    class="fixed inset-0 z-40 hidden items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4"
-    onclick="if(event.target === this) closeCart()"
-  >
-    <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl border-t-4 sm:border-4 border-ice-300 overflow-hidden flex flex-col max-h-[88vh]">
-      <!-- Cart Header -->
-      <div class="bg-gradient-to-r from-pink-600 via-royal-700 to-ice-600 text-white px-5 py-4 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <span class="text-2xl">🛒</span>
-          <div>
-            <h3 class="font-display text-xl font-bold leading-tight">Lili’s Ice Cream Tray</h3>
-            <p class="text-xs text-pink-100">Review your treats before completing order</p>
-          </div>
+  <!-- =========================================================================
+       MODAL 2: CHECKOUT TRAY DRAWER WITH COMPACT TIP SECTION
+       ========================================================================= -->
+  <div id="trayModal" class="modal-backdrop" onclick="if(event.target === this) closeTrayModal()">
+    <div class="tray-sheet">
+      <!-- Fixed Modal Header -->
+      <div class="flex-shrink-0 bg-gradient-to-r from-pink-500 via-purple-600 to-sky-500 text-white px-5 py-3.5 flex items-center justify-between">
+        <div>
+          <h3 class="font-display text-xl font-bold leading-tight">Your Order Tray</h3>
+          <p class="text-xs font-bold text-pink-100">Review your treats &amp; add a tip for Lili!</p>
         </div>
         <button
-          onclick="closeCart()"
+          type="button"
+          onclick="closeTrayModal()"
           aria-label="Close Tray"
-          class="btn-bounce w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white font-bold text-lg"
+          class="btn-pop w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 font-bold text-lg flex items-center justify-center"
         >
           ✕
         </button>
       </div>
 
-      <!-- Cart Items List -->
-      <div id="cartItemsContainer" class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-3 bg-ice-50/50">
-        <!-- Populated dynamically -->
-      </div>
+      <!-- Scrollable Middle Section: Itemized List + Compact Tip Box -->
+      <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 bg-pink-50/40">
+        <div id="trayItemsList" class="space-y-2"></div>
 
-      <!-- Cart Footer -->
-      <div class="p-4 sm:p-5 bg-white border-t-2 border-ice-100 space-y-3">
-        <div class="flex items-center justify-between text-slate-600 text-sm font-semibold">
-          <span>Total Treats:</span>
-          <span id="modalItemCount">0 items</span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="font-display text-lg font-bold text-slate-700">Total Amount:</span>
-          <span id="modalTotalAmount" class="font-display text-2xl font-bold text-royal-700">$0.00</span>
-        </div>
-
-        <div class="grid grid-cols-3 gap-2.5 pt-1">
-          <button
-            onclick="clearCart()"
-            class="btn-bounce col-span-1 py-3.5 px-3 rounded-2xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 font-display font-bold text-sm sm:text-base border border-slate-200 transition"
-          >
-            Clear Tray
-          </button>
-          <button
-            onclick="placeOrder()"
-            class="btn-bounce col-span-2 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-display font-bold text-base sm:text-lg shadow-lg border-2 border-emerald-200 flex items-center justify-center gap-2 transition"
-          >
-            <span>Complete Order</span>
-            <span>💳</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- FRIENDLY NOTICE MODAL -->
-  <div
-    id="noticeModal"
-    class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
-    onclick="if(event.target === this) closeNotice()"
-  >
-    <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl border-4 border-pink-300 overflow-hidden text-center p-6 space-y-4">
-      <div class="w-16 h-16 mx-auto rounded-full bg-ice-100 border-2 border-ice-300 flex items-center justify-center text-4xl">
-        ⛄
-      </div>
-      <div>
-        <h3 class="font-display text-2xl font-bold text-royal-800">Notice</h3>
-        <p id="noticeMessage" class="text-slate-600 font-medium text-base mt-1.5">
-          Your ice cream tray is empty! Tap any treat to add it.
-        </p>
-      </div>
-      <button
-        onclick="closeNotice()"
-        class="btn-bounce w-full py-3.5 rounded-2xl bg-gradient-to-r from-pink-600 via-royal-600 to-ice-500 text-white font-display font-bold text-lg shadow-md"
-      >
-        OK 🍦
-      </button>
-    </div>
-  </div>
-
-  <!-- ORDER RECEIPT MODAL -->
-  <div
-    id="receiptModal"
-    class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4 overflow-y-auto"
-  >
-    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border-4 border-amber-300 overflow-hidden my-auto">
-      <!-- Top Ribbon -->
-      <div class="bg-gradient-to-r from-pink-600 via-royal-700 to-ice-600 text-white p-5 text-center relative">
-        <div class="inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest mb-1">
-          ❄️ Official Pretend Receipt
-        </div>
-        <h3 class="font-display text-2xl sm:text-3xl font-bold tracking-wide">ORDER RECEIPT</h3>
-        <p id="receiptOrderNumber" class="font-mono text-amber-300 font-bold text-lg mt-0.5">
-          ORDER #LILI-104
-        </p>
-      </div>
-
-      <!-- Receipt Paper Body -->
-      <div class="p-5 sm:p-6 bg-white relative">
-        <div class="flex justify-between text-xs text-slate-400 font-semibold border-b border-dashed border-slate-300 pb-2.5 mb-3">
-          <span>THE MICHOACANA LILI</span>
-          <span id="receiptTimestamp">TODAY</span>
-        </div>
-
-        <!-- Itemized List -->
-        <div id="receiptItemsList" class="space-y-2.5 max-h-56 overflow-y-auto pr-1 text-sm sm:text-base">
-          <!-- Populated dynamically -->
-        </div>
-
-        <!-- Total & PAID Stamp -->
-        <div class="mt-4 pt-3.5 border-t-2 border-dashed border-slate-300 flex items-center justify-between relative">
-          <div>
-            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Paid</p>
-            <p id="receiptTotalAmount" class="font-display text-3xl font-bold text-slate-800">
-              $0.00
-            </p>
-          </div>
-
-          <!-- Visual PAID Stamp -->
-          <div class="paid-stamp border-4 border-emerald-500 text-emerald-600 font-display font-extrabold text-xl sm:text-2xl px-4 py-1 rounded-xl tracking-wider shadow-sm bg-emerald-50/80">
-            PAID ✨
-          </div>
-        </div>
-
-        <!-- Pretend Play Action Buttons -->
-        <div class="mt-6 space-y-2.5">
-          <button
-            onclick="playIceCreamJingle()"
-            class="btn-bounce w-full py-3.5 px-4 rounded-2xl bg-amber-300 hover:bg-amber-200 text-royal-900 font-display font-bold text-base sm:text-lg shadow border-2 border-amber-400 flex items-center justify-center gap-2 transition"
-          >
-            <span>🔔</span>
-            <span>Ring Kart Bell</span>
-          </button>
-
-          <button
-            onclick="finishOrderAndReset()"
-            class="btn-bounce w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-pink-600 via-royal-600 to-ice-500 hover:from-pink-500 hover:to-ice-400 text-white font-display font-bold text-base sm:text-lg shadow-lg flex items-center justify-center gap-2 transition"
-          >
-            <span>New Order / Next Customer</span>
-            <span>❄️</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ==========================================
-    // 1. MENU DATA (The Michoacana Lili + Frozen)
-    // ==========================================
-    const CATEGORIES = [
-      { id: 'all', label: 'All Treats', icon: '✨' },
-      { id: 'cones', label: 'Cones & Sundaes', icon: '🍦' },
-      { id: 'popsicles', label: 'Paletas & Pops', icon: '🍭' },
-      { id: 'toppers', label: 'Toppers & Sprinkles', icon: '👑' }
-    ];
-
-    const MENU_ITEMS = [
-      // Cones & Sundaes
-      {
-        id: 'elsa-cone',
-        category: 'cones',
-        name: 'Elsa Ice Blue Swirl Cone',
-        description: 'Frosty ice-blue vanilla soft-serve swirled high in a crispy waffle cone.',
-        price: 3.50,
-        badge: 'Frozen Favorite',
-        accent: 'from-sky-400 to-blue-600',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><polygon points="22,32 42,32 32,60" fill="#F59E0B" stroke="#B45309" stroke-width="2"/><path d="M25 38L36 48M39 38L28 48" stroke="#D97706" stroke-width="1.5"/><circle cx="32" cy="26" r="11" fill="#38BDF8"/><circle cx="32" cy="17" r="8" fill="#BAE6FD"/><circle cx="32" cy="10" r="4.5" fill="#F0F9FF"/><path d="M32 6V14M28 10H36M29.5 7.5L34.5 12.5M34.5 7.5L29.5 12.5" stroke="#0284C7" stroke-width="1.4" stroke-linecap="round"/></svg>`
-      },
-      {
-        id: 'anna-cone',
-        category: 'cones',
-        name: 'Anna Berry Royal Cone',
-        description: 'Sweet royal berry & magenta cream scoops in a golden sugar cone.',
-        price: 3.50,
-        badge: 'Royal Sweet',
-        accent: 'from-purple-500 to-pink-500',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><polygon points="22,32 42,32 32,60" fill="#FBBF24" stroke="#B45309" stroke-width="2"/><circle cx="27" cy="27" r="9" fill="#C084FC"/><circle cx="37" cy="27" r="9" fill="#EC4899"/><circle cx="32" cy="18" r="9" fill="#9333EA"/><circle cx="32" cy="9" r="3.5" fill="#FDE047"/></svg>`
-      },
-      {
-        id: 'olaf-cup',
-        category: 'cones',
-        name: 'Olaf Snowball Cup',
-        description: 'Fluffy vanilla snowball scoops in a frosty cup with a carrot nose smile.',
-        price: 4.00,
-        badge: 'Warm Hugs!',
-        accent: 'from-cyan-400 to-sky-500',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><path d="M18 34H46L42 56H22L18 34Z" fill="#0284C7" stroke="#BAE6FD" stroke-width="2"/><circle cx="32" cy="27" r="11" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/><circle cx="32" cy="16" r="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/><circle cx="29" cy="14" r="1.5" fill="#1E293B"/><circle cx="35" cy="14" r="1.5" fill="#1E293B"/><polygon points="32,16 39,18 32,19" fill="#F97316"/></svg>`
-      },
-      {
-        id: 'fresas-crema',
-        category: 'cones',
-        name: 'Fresas con Crema Cup',
-        description: 'Classic Michoacana sweet cream layered with juicy red strawberries.',
-        price: 4.50,
-        badge: 'Michoacana Classic',
-        accent: 'from-pink-500 to-rose-500',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><path d="M18 30H46L42 56H22L18 30Z" fill="#FFF1F2" stroke="#EC4899" stroke-width="2"/><path d="M19 37H45L44 44H20L19 37Z" fill="#F43F5E"/><circle cx="26" cy="26" r="7" fill="#E11D48"/><circle cx="38" cy="26" r="7" fill="#FB7185"/><circle cx="32" cy="21" r="8" fill="#FFFFFF"/><circle cx="32" cy="13" r="4" fill="#E11D48"/><path d="M29 10L32 13L35 10" stroke="#16A34A" stroke-width="2" stroke-linecap="round"/></svg>`
-      },
-
-      // Paletas & Pops
-      {
-        id: 'snowflake-pop',
-        category: 'popsicles',
-        name: 'Snowflake Ice Pop',
-        description: 'Sparkling glacier-blue paleta stamped with a frosty snow crystal.',
-        price: 2.50,
-        badge: 'Icy Cool',
-        accent: 'from-sky-400 to-indigo-500',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><rect x="29" y="42" width="6" height="16" rx="3" fill="#FCD34D" stroke="#B45309" stroke-width="1.5"/><rect x="20" y="10" width="24" height="34" rx="12" fill="#38BDF8" stroke="#E0F2FE" stroke-width="2"/><path d="M32 19V35M24 27H40M26.5 21.5L37.5 32.5M37.5 21.5L26.5 32.5" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/></svg>`
-      },
-      {
-        id: 'strawberry-paleta',
-        category: 'popsicles',
-        name: 'Strawberry Paleta',
-        description: 'Creamy pink fresa paleta packed with real sweet strawberry slices.',
-        price: 2.50,
-        badge: 'Paletería Hit',
-        accent: 'from-pink-400 to-rose-600',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><rect x="29" y="42" width="6" height="16" rx="3" fill="#FCD34D" stroke="#B45309" stroke-width="1.5"/><rect x="20" y="10" width="24" height="34" rx="12" fill="#EC4899" stroke="#FBCFE8" stroke-width="2"/><circle cx="28" cy="21" r="3.5" fill="#BE123C"/><circle cx="36" cy="29" r="4" fill="#BE123C"/><circle cx="28" cy="35" r="3" fill="#FFE4E6"/></svg>`
-      },
-      {
-        id: 'mango-chamoy-pop',
-        category: 'popsicles',
-        name: 'Mango Chamoy Pop',
-        description: 'Sunny golden mango paleta swirled with tangy red chamoy ribbons!',
-        price: 3.00,
-        badge: 'Sweet & Tangy',
-        accent: 'from-amber-400 to-orange-500',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><rect x="29" y="42" width="6" height="16" rx="3" fill="#FCD34D" stroke="#B45309" stroke-width="1.5"/><rect x="20" y="10" width="24" height="34" rx="12" fill="#FBBF24" stroke="#FEF3C7" stroke-width="2"/><path d="M21 20C28 18 35 25 43 22M21 31C29 29 36 36 43 33" stroke="#DC2626" stroke-width="3.5" stroke-linecap="round"/></svg>`
-      },
-      {
-        id: 'frosty-twin-pop',
-        category: 'popsicles',
-        name: 'Frosty Twin Pop',
-        description: 'Double-stick ice blue & royal purple paleta made for sharing.',
-        price: 2.75,
-        badge: 'Shareable',
-        accent: 'from-cyan-400 to-purple-500',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><rect x="23" y="42" width="5" height="16" rx="2.5" fill="#FCD34D" stroke="#B45309" stroke-width="1.5"/><rect x="36" y="42" width="5" height="16" rx="2.5" fill="#FCD34D" stroke="#B45309" stroke-width="1.5"/><path d="M18 22C18 15 23 10 30 10H32V44H18V22Z" fill="#38BDF8"/><path d="M32 10H34C41 10 46 15 46 22V44H32V10Z" fill="#A855F7"/><line x1="32" y1="10" x2="32" y2="44" stroke="#FFFFFF" stroke-width="1.5"/></svg>`
-      },
-
-      // Toppers & Sprinkles
-      {
-        id: 'elsa-anna-topper',
-        category: 'toppers',
-        name: 'Elsa & Anna Topper',
-        description: 'Sparkling royal tiara & snowflake clip-on topper for your treat!',
-        price: 1.00,
-        badge: 'Royal Topper',
-        accent: 'from-sky-400 to-purple-500',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><polygon points="12,44 17,22 26,34 32,14 38,34 47,22 52,44" fill="#38BDF8" stroke="#7C3AED" stroke-width="2" stroke-linejoin="round"/><circle cx="32" cy="13" r="3.5" fill="#EC4899"/><circle cx="17" cy="20" r="2.5" fill="#FDE047"/><circle cx="47" cy="20" r="2.5" fill="#FDE047"/><circle cx="32" cy="36" r="3" fill="#FFFFFF"/></svg>`
-      },
-      {
-        id: 'rainbow-snowflake-sprinkles',
-        category: 'toppers',
-        name: 'Rainbow & Snowflake Sprinkles',
-        description: 'A magical shake of colorful confetti & icy sugar snowflakes.',
-        price: 0.75,
-        badge: 'Add-On',
-        accent: 'from-pink-400 via-amber-300 to-sky-400',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><rect x="16" y="20" width="10" height="4" rx="2" transform="rotate(-25 16 20)" fill="#EC4899"/><rect x="38" y="18" width="10" height="4" rx="2" transform="rotate(20 38 18)" fill="#38BDF8"/><rect x="26" y="31" width="10" height="4" rx="2" transform="rotate(15 26 31)" fill="#FBBF24"/><rect x="16" y="42" width="10" height="4" rx="2" transform="rotate(35 16 42)" fill="#7C3AED"/><rect x="38" y="41" width="10" height="4" rx="2" transform="rotate(-30 38 41)" fill="#10B981"/></svg>`
-      },
-      {
-        id: 'whipped-snow-cherry',
-        category: 'toppers',
-        name: 'Whipped Snow & Cherry',
-        description: 'Fluffy swirl of sweet snow cream crowned with a bright red cherry.',
-        price: 1.00,
-        badge: 'Sweet Swirl',
-        accent: 'from-rose-400 to-pink-500',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><ellipse cx="32" cy="44" rx="18" ry="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/><ellipse cx="32" cy="36" rx="13" ry="7" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/><ellipse cx="32" cy="29" rx="8" ry="5" fill="#FFFFFF"/><circle cx="32" cy="21" r="5.5" fill="#E11D48"/><path d="M32 16C34 11 38 10 41 11" stroke="#16A34A" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`
-      },
-      {
-        id: 'gummy-chamoy-drizzle',
-        category: 'toppers',
-        name: 'Gummy Bears & Chamoy Drizzle',
-        description: 'Chewy fruity gummy bears topped with a sweet-tangy chamoy drizzle.',
-        price: 1.00,
-        badge: 'Michoacana Extra',
-        accent: 'from-red-500 to-amber-500',
-        svg: `<svg viewBox="0 0 64 64" class="w-16 h-16"><circle cx="23" cy="25" r="5" fill="#F43F5E"/><ellipse cx="23" cy="35" rx="6" ry="7" fill="#F43F5E"/><circle cx="20" cy="21" r="2" fill="#F43F5E"/><circle cx="26" cy="21" r="2" fill="#F43F5E"/><circle cx="41" cy="27" r="5" fill="#10B981"/><ellipse cx="41" cy="37" rx="6" ry="7" fill="#10B981"/><circle cx="38" cy="23" r="2" fill="#10B981"/><circle cx="44" cy="23" r="2" fill="#10B981"/><path d="M14 48C22 44 42 52 50 47" stroke="#DC2626" stroke-width="4" stroke-linecap="round" fill="none"/></svg>`
-      }
-    ];
-
-    // ==========================================
-    // 2. APPLICATION STATE
-    // ==========================================
-    let activeCategory = 'all';
-    let cart = {}; // { itemId: quantity }
-    let soundEnabled = true;
-    let audioCtx = null;
-
-    // ==========================================
-    // 3. WEB AUDIO API MAGICAL SOUND EFFECTS
-    // ==========================================
-    function getAudioContext() {
-      if (!audioCtx) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-          audioCtx = new AudioContext();
-        }
-      }
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-      return audioCtx;
-    }
-
-    function triggerHaptic(pattern = 25) {
-      if (navigator.vibrate) {
-        try { navigator.vibrate(pattern); } catch (e) {}
-      }
-    }
-
-    function playSparkleChime(pitchMultiplier = 1) {
-      if (!soundEnabled) return;
-      const ctx = getAudioContext();
-      if (!ctx) return;
-
-      const notes = [523.25, 659.25, 783.99, 1046.50].map(f => f * pitchMultiplier);
-      notes.forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.055);
-
-        gain.gain.setValueAtTime(0.001, ctx.currentTime + idx * 0.055);
-        gain.gain.exponentialRampToValueAtTime(0.14, ctx.currentTime + idx * 0.055 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.055 + 0.25);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(ctx.currentTime + idx * 0.055);
-        osc.stop(ctx.currentTime + idx * 0.055 + 0.26);
-      });
-    }
-
-    function playIceCreamJingle() {
-      triggerHaptic([25, 40, 25]);
-      if (!soundEnabled) return;
-      const ctx = getAudioContext();
-      if (!ctx) return;
-
-      const melody = [
-        { f: 523.25, t: 0.00, d: 0.16 },
-        { f: 659.25, t: 0.17, d: 0.16 },
-        { f: 783.99, t: 0.34, d: 0.16 },
-        { f: 659.25, t: 0.51, d: 0.16 },
-        { f: 880.00, t: 0.68, d: 0.22 },
-        { f: 783.99, t: 0.92, d: 0.35 }
-      ];
-
-      melody.forEach(note => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(note.f, ctx.currentTime + note.t);
-
-        gain.gain.setValueAtTime(0.001, ctx.currentTime + note.t);
-        gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + note.t + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + note.t + note.d);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(ctx.currentTime + note.t);
-        osc.stop(ctx.currentTime + note.t + note.d + 0.02);
-      });
-    }
-
-    function toggleSound() {
-      soundEnabled = !soundEnabled;
-      const iconEl = document.getElementById('soundIcon');
-      if (iconEl) {
-        iconEl.textContent = soundEnabled ? '🔊' : '🔇';
-      }
-      triggerHaptic(15);
-      if (soundEnabled) playSparkleChime(1.1);
-    }
-
-    // ==========================================
-    // 4. RENDERING FUNCTIONS
-    // ==========================================
-    function formatMoney(amount) {
-      return '$' + amount.toFixed(2);
-    }
-
-    function renderCategories() {
-      const container = document.getElementById('categoryTabs');
-      if (!container) return;
-
-      container.innerHTML = CATEGORIES.map(cat => {
-        const isActive = cat.id === activeCategory;
-        return `
-          <button
-            onclick="selectCategory('${cat.id}')"
-            class="btn-bounce flex items-center gap-1.5 px-4 py-2.5 rounded-2xl font-display font-bold text-sm sm:text-base whitespace-nowrap transition border-2 ${
-              isActive
-                ? 'bg-pink-600 text-white border-pink-600 shadow-md'
-                : 'bg-ice-50 hover:bg-ice-100 text-slate-700 border-ice-200'
-            }"
-          >
-            <span>${cat.icon}</span>
-            <span>${cat.label}</span>
-          </button>
-        `;
-      }).join('');
-    }
-
-    function renderMenu() {
-      const grid = document.getElementById('menuGrid');
-      if (!grid) return;
-
-      const filtered = activeCategory === 'all'
-        ? MENU_ITEMS
-        : MENU_ITEMS.filter(item => item.category === activeCategory);
-
-      grid.innerHTML = filtered.map(item => {
-        const qty = cart[item.id] || 0;
-        return `
-          <article
-            id="card-${item.id}"
-            onclick="addToCart('${item.id}')"
-            role="button"
-            tabindex="0"
-            onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();addToCart('${item.id}');}"
-            class="cursor-pointer bg-white rounded-3xl p-4 shadow-md hover:shadow-xl transition border-2 ${
-              qty > 0 ? 'border-pink-500 ring-2 ring-pink-200' : 'border-ice-200'
-            } flex flex-col justify-between relative"
-          >
-            ${qty > 0 ? `
-              <span class="absolute -top-2.5 -right-2.5 z-10 bg-pink-600 text-white font-display font-bold text-sm px-3 py-1 rounded-full shadow-md border-2 border-white">
-                ${qty} in tray
-              </span>
-            ` : ''}
-
-            <div>
-              <!-- Top Visual Stage -->
-              <div class="relative rounded-2xl bg-gradient-to-br ${item.accent} p-4 flex items-center justify-center mb-3 shadow-inner overflow-hidden">
-                <span class="absolute top-2.5 left-2.5 bg-white/95 text-slate-800 text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-sm">
-                  ${item.badge}
-                </span>
-                <span class="absolute bottom-2.5 right-2.5 bg-slate-900/80 text-white font-display font-bold text-base px-3 py-0.5 rounded-full backdrop-blur-sm">
-                  ${formatMoney(item.price)}
-                </span>
-                <div class="transform transition-transform duration-200 hover:scale-110 drop-shadow-md">
-                  ${item.svg}
-                </div>
-              </div>
-
-              <!-- Title & Description -->
-              <h3 class="font-display text-lg font-bold text-slate-800 leading-snug">
-                ${item.name}
-              </h3>
-              <p class="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
-                ${item.description}
-              </p>
-            </div>
-
-            <!-- Interactive Add / Quantity Controls -->
-            <div class="mt-4 pt-3 border-t border-slate-100" onclick="event.stopPropagation()">
-              ${qty === 0 ? `
-                <button
-                  onclick="addToCart('${item.id}')"
-                  class="btn-bounce w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-pink-500 via-royal-600 to-ice-500 hover:from-pink-400 hover:to-ice-400 text-white font-display font-bold text-base shadow-sm flex items-center justify-center gap-2 transition"
-                >
-                  <span>+ Tap to Add</span>
-                </button>
-              ` : `
-                <div class="flex items-center justify-between bg-pink-50 border-2 border-pink-300 rounded-2xl p-1.5">
-                  <button
-                    onclick="updateQuantity('${item.id}', -1)"
-                    aria-label="Decrease quantity"
-                    class="btn-bounce w-11 h-11 rounded-xl bg-white hover:bg-rose-50 text-pink-700 hover:text-rose-600 font-display font-bold text-2xl shadow-sm border border-pink-200 flex items-center justify-center"
-                  >
-                    −
-                  </button>
-                  <div class="text-center">
-                    <span class="font-display font-bold text-xl text-royal-900">${qty}</span>
-                    <span class="block text-[10px] font-bold uppercase tracking-wider text-pink-600">In Tray</span>
-                  </div>
-                  <button
-                    onclick="updateQuantity('${item.id}', 1)"
-                    aria-label="Increase quantity"
-                    class="btn-bounce w-11 h-11 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-display font-bold text-2xl shadow-sm flex items-center justify-center"
-                  >
-                    +
-                  </button>
-                </div>
-              `}
-            </div>
-          </article>
-        `;
-      }).join('');
-    }
-
-    function updateCartTotalsUI() {
-      let totalCount = 0;
-      let totalAmount = 0;
-
-      Object.entries(cart).forEach(([id, qty]) => {
-        const item = MENU_ITEMS.find(i => i.id === id);
-        if (item && qty > 0) {
-          totalCount += qty;
-          totalAmount += item.price * qty;
-        }
-      });
-
-      const bottomCountEl = document.getElementById('bottomCartCount');
-      const bottomTotalEl = document.getElementById('bottomCartTotal');
-      const modalCountEl = document.getElementById('modalItemCount');
-      const modalTotalEl = document.getElementById('modalTotalAmount');
-
-      if (bottomCountEl) bottomCountEl.textContent = totalCount;
-      if (bottomTotalEl) bottomTotalEl.textContent = formatMoney(totalAmount);
-      if (modalCountEl) modalCountEl.textContent = `${totalCount} ${totalCount === 1 ? 'treat' : 'treats'}`;
-      if (modalTotalEl) modalTotalEl.textContent = formatMoney(totalAmount);
-
-      renderCartModalItems();
-    }
-
-    function renderCartModalItems() {
-      const container = document.getElementById('cartItemsContainer');
-      if (!container) return;
-
-      const entries = Object.entries(cart).filter(([_, qty]) => qty > 0);
-
-      if (entries.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-10 px-4">
-            <div class="text-5xl mb-3">🍦</div>
-            <h4 class="font-display text-xl font-bold text-slate-700">Your tray is empty!</h4>
-            <p class="text-sm text-slate-500 mt-1">Close this window and tap any yummy ice cream or paleta to add it.</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = entries.map(([id, qty]) => {
-        const item = MENU_ITEMS.find(i => i.id === id);
-        if (!item) return '';
-        const lineTotal = item.price * qty;
-        return `
-          <div class="bg-white rounded-2xl p-3 shadow-sm border border-pink-200 flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${item.accent} p-1.5 flex-shrink-0 flex items-center justify-center">
-                ${item.svg}
-              </div>
-              <div class="min-w-0">
-                <h4 class="font-display font-bold text-slate-800 text-sm sm:text-base truncate">${item.name}</h4>
-                <p class="text-xs font-semibold text-pink-600">${formatMoney(item.price)} each • <span class="text-slate-700 font-bold">${formatMoney(lineTotal)}</span></p>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-1.5 flex-shrink-0">
+        <!-- Compact 💖 Add a Tip for Lili! Box -->
+        <div class="bg-gradient-to-br from-pink-50 via-purple-50 to-sky-50 rounded-2xl p-3.5 border-2 border-pink-200 shadow-sm">
+          <div class="flex items-center justify-between gap-2 mb-2.5">
+            <h4 class="font-display font-bold text-base text-purple-900">💖 Add a Tip for Lili!</h4>
+            <div class="flex items-center gap-1.5 bg-white px-2 py-1 rounded-xl border border-pink-200 shadow-sm">
               <button
-                onclick="updateQuantity('${item.id}', -1)"
-                class="btn-bounce w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-600 font-bold text-lg flex items-center justify-center"
+                type="button"
+                onclick="adjustTip(-1)"
+                aria-label="Decrease tip by $1"
+                class="btn-pop w-7 h-7 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-800 font-extrabold text-base flex items-center justify-center"
               >
                 −
               </button>
-              <span class="w-6 text-center font-display font-bold text-base text-slate-800">${qty}</span>
+              <span id="tipStepperValue" class="font-display font-bold text-sm text-purple-950 min-w-[44px] text-center">
+                $0
+              </span>
               <button
-                onclick="updateQuantity('${item.id}', 1)"
-                class="btn-bounce w-9 h-9 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-bold text-lg flex items-center justify-center"
+                type="button"
+                onclick="adjustTip(1)"
+                aria-label="Increase tip by $1"
+                class="btn-pop w-7 h-7 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-800 font-extrabold text-base flex items-center justify-center"
               >
                 +
               </button>
             </div>
           </div>
-        `;
-      }).join('');
-    }
 
-    // ==========================================
-    // 5. USER INTERACTIONS & CART LOGIC
-    // ==========================================
+          <div class="grid grid-cols-5 gap-1.5">
+            <button id="tipBtn-0" type="button" onclick="setTip(0)" class="btn-pop py-2 px-1 rounded-xl font-display font-bold text-xs sm:text-sm border-2">$0</button>
+            <button id="tipBtn-1" type="button" onclick="setTip(1)" class="btn-pop py-2 px-1 rounded-xl font-display font-bold text-xs sm:text-sm border-2">$1 😊</button>
+            <button id="tipBtn-2" type="button" onclick="setTip(2)" class="btn-pop py-2 px-1 rounded-xl font-display font-bold text-xs sm:text-sm border-2">$2 🌟</button>
+            <button id="tipBtn-3" type="button" onclick="setTip(3)" class="btn-pop py-2 px-1 rounded-xl font-display font-bold text-xs sm:text-sm border-2">$3 💖</button>
+            <button id="tipBtn-5" type="button" onclick="setTip(5)" class="btn-pop py-2 px-1 rounded-xl font-display font-bold text-xs sm:text-sm border-2">$5 👑</button>
+          </div>
+        </div>
+      </div>
 
-    // Blocks multi-touch pinch gestures on iOS Safari
-    document.addEventListener('gesturestart', (e) => e.preventDefault());
-    document.addEventListener('touchmove', (e) => {
-    if (e.touches.length > 1) e.preventDefault();
-    }, { passive: false });
+      <!-- Fixed Modal Footer: Subtotal, Tip, Grand Total + Pay Button -->
+      <div class="flex-shrink-0 p-4 bg-white border-t-2 border-pink-100 space-y-2.5">
+        <div class="space-y-1 text-sm">
+          <div class="flex items-center justify-between font-bold text-slate-600">
+            <span>Subtotal</span>
+            <span id="checkoutSubtotal">$0.00</span>
+          </div>
+          <div class="flex items-center justify-between font-bold text-pink-600">
+            <span>Tip 💖</span>
+            <span id="checkoutTip">$0.00</span>
+          </div>
+          <div class="flex items-center justify-between pt-1.5 border-t border-dashed border-slate-200">
+            <span class="font-display text-lg font-bold text-purple-950">Grand Total</span>
+            <span id="checkoutGrandTotal" class="font-display text-2xl font-bold text-purple-950">$0.00</span>
+          </div>
+        </div>
 
-    function selectCategory(catId) {
-      activeCategory = catId;
-      triggerHaptic(12);
-      renderCategories();
-      renderMenu();
-    }
+        <div class="grid grid-cols-3 gap-2 pt-1">
+          <button
+            type="button"
+            onclick="clearEntireTray()"
+            class="btn-pop py-3 rounded-2xl bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-600 font-display font-bold text-sm border border-slate-200"
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            onclick="payAndPrintReceipt()"
+            class="btn-pop col-span-2 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-display font-bold text-base shadow-lg"
+          >
+            ✨ Pay &amp; Print Receipt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    function addToCart(itemId) {
-      cart[itemId] = (cart[itemId] || 0) + 1;
-      triggerHaptic(25);
-      playSparkleChime(1.0);
-      renderMenu();
-      updateCartTotalsUI();
+  <!-- =========================================================================
+       MODAL 3: OFFICIAL ORDER RECEIPT
+       ========================================================================= -->
+  <div id="receiptModal" class="modal-backdrop">
+    <div class="bg-white w-full max-w-md max-h-[90dvh] flex flex-col rounded-3xl shadow-2xl border-4 border-amber-300 overflow-hidden">
+      <div class="flex-shrink-0 bg-gradient-to-r from-pink-500 via-purple-600 to-sky-500 text-white p-4 text-center">
+        <span class="inline-block text-[11px] font-extrabold uppercase tracking-widest bg-white/20 px-3 py-0.5 rounded-full mb-1">
+          ❄️ Official Pretend Receipt
+        </span>
+        <h3 class="font-display text-2xl font-bold tracking-wide">THE MICHOACANA LILI</h3>
+        <p id="receiptOrderNumber" class="font-mono text-amber-300 font-bold text-lg mt-0.5">#LILI-101</p>
+      </div>
 
-      const cardEl = document.getElementById(`card-${itemId}`);
-      if (cardEl) {
-        cardEl.classList.remove('card-pop');
-        void cardEl.offsetWidth;
-        cardEl.classList.add('card-pop');
+      <div class="flex-1 min-h-0 overflow-y-auto p-5">
+        <div class="flex justify-between text-xs font-extrabold text-slate-400 border-b border-dashed border-slate-300 pb-2 mb-3">
+          <span>LILI'S ICE CREAM KART</span>
+          <span id="receiptTimestamp">TODAY</span>
+        </div>
+
+        <div id="receiptItemsList" class="space-y-2.5 text-sm"></div>
+
+        <!-- Subtotal, Tip & Grand Total -->
+        <div class="mt-4 pt-3 border-t-2 border-dashed border-slate-300 space-y-1 text-sm">
+          <div class="flex justify-between font-bold text-slate-600">
+            <span>Subtotal</span>
+            <span id="receiptSubtotal">$0.00</span>
+          </div>
+          <div class="flex justify-between font-bold text-pink-600">
+            <span>Tip 💖</span>
+            <span id="receiptTip">$0.00</span>
+          </div>
+        </div>
+
+        <p
+          id="receiptTipThankYou"
+          class="hidden mt-2 text-center text-xs font-extrabold text-pink-600 bg-pink-50 border border-pink-200 rounded-xl py-1.5"
+        >
+          Thank you for the tip! ✨
+        </p>
+
+        <div class="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-extrabold uppercase text-slate-400">Grand Total</p>
+            <p id="receiptGrandTotal" class="font-display text-3xl font-bold text-slate-900">$0.00</p>
+          </div>
+          <div class="paid-stamp border-4 border-emerald-500 text-emerald-600 font-display font-extrabold text-xl px-3.5 py-1 rounded-xl bg-emerald-50">
+            PAID ✨
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-shrink-0 p-4 bg-slate-50 border-t border-slate-200 space-y-2">
+        <button
+          type="button"
+          onclick="playKartBell()"
+          class="btn-pop w-full py-3 rounded-2xl bg-amber-300 hover:bg-amber-200 text-purple-950 font-display font-bold text-base border border-amber-400 shadow-sm"
+        >
+          🔔 Ring Kart Bell
+        </button>
+        <button
+          type="button"
+          onclick="startNewOrder()"
+          class="btn-pop w-full py-3 rounded-2xl bg-gradient-to-r from-pink-500 via-purple-600 to-sky-500 text-white font-display font-bold text-base shadow-md"
+        >
+          New Order ❄️
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. EXACT TOY INVENTORY & PRICING CONSTANTS
+    // =========================================================================
+    const BASE_PRICE = 3.00;
+    const EXTRA_SCOOP_PRICE = 1.00;
+    const DRIPPER_PRICE = 1.00;
+    const TOPPER_PRICE = 1.00;
+    const POPSICLE_PRICE = 2.00;
+    const MAX_SCOOPS = 6;
+
+    const BASES = {
+      cup:  { id: 'cup',  name: 'Snowflake Cup' },
+      cone: { id: 'cone', name: 'Waffle Cone' }
+    };
+
+    const FLAVORS = {
+      vanilla:    { id: 'vanilla',    name: 'Vanilla',    hex: 0xfffdf7, chipClass: 'bg-[#fffdf7] text-slate-800 border-slate-300' },
+      chocolate:  { id: 'chocolate',  name: 'Chocolate',  hex: 0x4a2511, chipClass: 'bg-[#4a2511] text-white border-amber-950' },
+      mint:       { id: 'mint',       name: 'Mint',       hex: 0x5eead4, chipClass: 'bg-[#5eead4] text-slate-900 border-teal-400' },
+      strawberry: { id: 'strawberry', name: 'Strawberry', hex: 0xff2e88, chipClass: 'bg-[#ff2e88] text-white border-pink-600' }
+    };
+
+    const DRIPPERS = {
+      chocolate:  { id: 'chocolate',  name: 'Chocolate Drip',    hex: 0x3b1d0d },
+      strawberry: { id: 'strawberry', name: 'Strawberry Drip',   hex: 0xff2478 },
+      frostberry: { id: 'frostberry', name: 'Purple Frostberry', hex: 0x8b5cf6 }
+    };
+
+    const TOPPERS = [
+      { id: 'mint-dino',       name: 'Mint Dino',       emoji: '🦕', hex: 0x6ee7b7, swatch: '#6ee7b7', translucent: true },
+      { id: 'pink-snowflake',  name: 'Pink Snowflake',  emoji: '❄️', hex: 0xff2e88, swatch: '#ff2e88', translucent: false },
+      { id: 'purple-snowman',  name: 'Purple Snowman',  emoji: '⛄', hex: 0xa855f7, swatch: '#a855f7', translucent: false },
+      { id: 'pink-castle',     name: 'Pink Castle',     emoji: '🏰', hex: 0xf43f8e, swatch: '#f43f8e', translucent: false },
+      { id: 'purple-crystal',  name: 'Purple Crystal',  emoji: '💎', hex: 0x9333ea, swatch: '#9333ea', translucent: true },
+      { id: 'aqua-horse',      name: 'Aqua Ice Horse',  emoji: '🐴', hex: 0x67e8f9, swatch: '#67e8f9', translucent: true }
+    ];
+
+    const POPSICLES = [
+      { id: 'pink-snowflake-pop', name: 'Pink Snowflake Pop', emoji: '❄️', hex: 0xff2e88, translucent: false, cardClass: 'bg-pink-50 border-pink-200' },
+      { id: 'olaf-face-pop',      name: 'Olaf Face Pop',      emoji: '☃️', hex: 0xf8fafc, translucent: false, cardClass: 'bg-slate-50 border-slate-200' },
+      { id: 'aqua-horse-pop',     name: 'Aqua Ice Horse Pop', emoji: '🐴', hex: 0x67e8f9, translucent: true,  cardClass: 'bg-cyan-50 border-cyan-200' },
+      { id: 'white-snowman-pop',  name: 'White Snowman Pop',  emoji: '⛄', hex: 0xf1f5f9, translucent: false, cardClass: 'bg-sky-50 border-sky-200' }
+    ];
+
+    // =========================================================================
+    // 2. APPLICATION STATE (STARTS COMPLETELY EMPTY)
+    // =========================================================================
+    let activeMode = 'sundae'; // 'sundae' | 'popsicle'
+
+    let sundae = {
+      baseId: null,
+      scoops: [],
+      dripperId: null,
+      topperId: null
+    };
+
+    let selectedPopsicleId = null;
+    let tray = [];
+    let tipAmount = 0;
+
+    let soundEnabled = true;
+    let autoSpin = true;
+    let audioCtx = null;
+
+    // Three.js Globals
+    let scene, camera, renderer, buildGroup, snowGroup;
+    let resizeObserver = null;
+    let springActors = [];
+    let isDragging = false;
+    let prevPointer = { x: 0, y: 0 };
+    let targetRot = { x: 0.14, y: 0.45 };
+    let targetCamY = 2.0;
+    let targetCamZ = 6.6;
+    let targetLookY = 0.85;
+
+    // Cached CanvasTextures
+    let cupTexture = null;
+    let waffleTexture = null;
+    let frozenBandTexture = null;
+
+    // =========================================================================
+    // 3. WEB AUDIO API SOUND EFFECTS (POP, SPARKLE CHIME & KART BELL)
+    // =========================================================================
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) audioCtx = new Ctx();
       }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
     }
 
-    function updateQuantity(itemId, delta) {
-      const current = cart[itemId] || 0;
-      const next = current + delta;
-      if (next <= 0) {
-        delete cart[itemId];
+    function playPop(freq = 540) {
+      if (!soundEnabled) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.45, now + 0.10);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.13);
+    }
+
+    function playSparkleChime() {
+      if (!soundEnabled) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const notes = [880, 1108.73, 1318.51, 1760];
+      notes.forEach((f, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, now + idx * 0.055);
+        gain.gain.setValueAtTime(0.10, now + idx * 0.055);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.055 + 0.24);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.055);
+        osc.stop(now + idx * 0.055 + 0.25);
+      });
+    }
+
+    function playKartBell() {
+      if (!soundEnabled) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const melody = [587.33, 739.99, 880.0, 1174.66];
+      melody.forEach((f, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, now + idx * 0.09);
+        gain.gain.setValueAtTime(0.14, now + idx * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.28);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.09);
+        osc.stop(now + idx * 0.09 + 0.29);
+      });
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundIcon').textContent = soundEnabled ? '🔊' : '🔇';
+      if (soundEnabled) playPop(660);
+    }
+
+    function toggleAutoSpin() {
+      autoSpin = !autoSpin;
+      document.getElementById('autoSpinLabel').textContent = autoSpin ? 'Spin: ON' : 'Spin: OFF';
+      playPop(500);
+    }
+
+    // =========================================================================
+    // 4. PROCEDURAL CANVASTEXTURES (CUP SNOWFLAKES & WAFFLE CONE BAND)
+    // =========================================================================
+    function getCupTexture() {
+      if (cupTexture) return cupTexture;
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 256;
+      const ctx = c.getContext('2d');
+
+      const panels = 8;
+      const pw = c.width / panels;
+      for (let i = 0; i < panels; i++) {
+        ctx.fillStyle = i % 2 === 0 ? '#7e57c2' : '#b39ddb';
+        ctx.fillRect(i * pw, 0, pw, c.height);
+
+        const cx = i * pw + pw / 2;
+        const cy = c.height / 2;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.strokeStyle = 'rgba(255,255,255,0.94)';
+        ctx.lineWidth = 3.5;
+        ctx.lineCap = 'round';
+        for (let a = 0; a < 8; a++) {
+          ctx.rotate(Math.PI / 4);
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(0, -24);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(0, -14);
+          ctx.lineTo(-6, -20);
+          ctx.moveTo(0, -14);
+          ctx.lineTo(6, -20);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      ctx.fillStyle = '#e0f2fe';
+      ctx.fillRect(0, 0, c.width, 10);
+      ctx.fillRect(0, c.height - 10, c.width, 10);
+
+      cupTexture = new THREE.CanvasTexture(c);
+      cupTexture.wrapS = THREE.RepeatWrapping;
+      return cupTexture;
+    }
+
+    function getWaffleTexture() {
+      if (waffleTexture) return waffleTexture;
+      const c = document.createElement('canvas');
+      c.width = 256;
+      c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#e5a95c';
+      ctx.fillRect(0, 0, 256, 256);
+      ctx.strokeStyle = '#c48338';
+      ctx.lineWidth = 4;
+      for (let i = -256; i < 512; i += 24) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i + 256, 256);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(i, 256);
+        ctx.lineTo(i + 256, 0);
+        ctx.stroke();
+      }
+      waffleTexture = new THREE.CanvasTexture(c);
+      waffleTexture.wrapS = THREE.RepeatWrapping;
+      waffleTexture.wrapT = THREE.RepeatWrapping;
+      waffleTexture.repeat.set(2, 1);
+      return waffleTexture;
+    }
+
+    function getFrozenBandTexture() {
+      if (frozenBandTexture) return frozenBandTexture;
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 128;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, 512, 128);
+      const colors = ['#7e22ce', '#ec4899', '#38bdf8', '#4338ca', '#f472b6'];
+      const step = 32;
+      for (let i = 0; i < 16; i++) {
+        const x = i * step;
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.beginPath();
+        ctx.moveTo(x + step / 2, 10);
+        ctx.lineTo(x + step - 3, 64);
+        ctx.lineTo(x + step / 2, 118);
+        ctx.lineTo(x + 3, 64);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(x + step / 2, 42);
+        ctx.lineTo(x + step / 2 + 6, 64);
+        ctx.lineTo(x + step / 2, 86);
+        ctx.lineTo(x + step / 2 - 6, 64);
+        ctx.closePath();
+        ctx.fill();
+      }
+      frozenBandTexture = new THREE.CanvasTexture(c);
+      frozenBandTexture.wrapS = THREE.RepeatWrapping;
+      return frozenBandTexture;
+    }
+
+    // =========================================================================
+    // 5. THREE.JS r128 3D TOY MESH BUILDERS (STRICTLY r128 BUILT-INS ONLY)
+    // =========================================================================
+    function createDripFinger(radius, length, mat) {
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 0.9, length, 10), mat);
+      const bottomTip = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.9, 10, 8), mat);
+      bottomTip.position.y = -length / 2;
+      const topCap = new THREE.Mesh(new THREE.SphereGeometry(radius, 10, 8), mat);
+      topCap.position.y = length / 2;
+      body.castShadow = true;
+      bottomTip.castShadow = true;
+      g.add(body, bottomTip, topCap);
+      return g;
+    }
+
+    function buildBaseMesh(baseId) {
+      const group = new THREE.Group();
+
+      if (baseId === 'cup') {
+        const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.24, metalness: 0.04 });
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.92, 0.68, 1.12, 36), whiteMat);
+        body.position.y = 0.56;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        group.add(body);
+
+        const bandMat = new THREE.MeshStandardMaterial({ map: getCupTexture(), roughness: 0.30, metalness: 0.04 });
+        const band = new THREE.Mesh(new THREE.CylinderGeometry(0.895, 0.725, 0.82, 36, 1, true), bandMat);
+        band.position.y = 0.54;
+        group.add(band);
+
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.93, 0.085, 14, 36), whiteMat);
+        rim.rotation.x = Math.PI / 2;
+        rim.position.y = 1.09;
+        rim.castShadow = true;
+        group.add(rim);
       } else {
-        cart[itemId] = next;
+        const coneMat = new THREE.MeshStandardMaterial({ map: getWaffleTexture(), roughness: 0.48, metalness: 0.02 });
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.84, 0.50, 1.52, 32), coneMat);
+        body.position.y = 0.76;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        group.add(body);
+
+        const lipMat = new THREE.MeshStandardMaterial({ color: 0xe5a95c, roughness: 0.44 });
+        const lip = new THREE.Mesh(new THREE.CylinderGeometry(0.94, 0.84, 0.24, 32), lipMat);
+        lip.position.y = 1.58;
+        lip.castShadow = true;
+        group.add(lip);
+
+        const bandMat = new THREE.MeshStandardMaterial({ map: getFrozenBandTexture(), roughness: 0.32 });
+        const band = new THREE.Mesh(new THREE.CylinderGeometry(0.815, 0.72, 0.44, 32, 1, true), bandMat);
+        band.position.y = 1.24;
+        group.add(band);
       }
-      triggerHaptic(18);
-      if (delta > 0) playSparkleChime(1.15);
-      renderMenu();
-      updateCartTotalsUI();
+
+      return group;
     }
 
-    function clearCart() {
-      cart = {};
-      triggerHaptic([20, 30, 20]);
-      renderMenu();
-      updateCartTotalsUI();
+    function buildScoopMesh(flavorId) {
+      const flv = FLAVORS[flavorId] || FLAVORS.vanilla;
+      const group = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({
+        color: flv.hex,
+        roughness: 0.30,
+        metalness: 0.03
+      });
+
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.86, 32, 20, 0, Math.PI * 2, 0, Math.PI * 0.58), mat);
+      dome.scale.set(1, 0.86, 1);
+      dome.position.y = 0.16;
+      dome.castShadow = true;
+      dome.receiveShadow = true;
+      group.add(dome);
+
+      // Scalloped bottom ruffle lobes
+      const lobes = 12;
+      for (let i = 0; i < lobes; i++) {
+        const angle = (i / lobes) * Math.PI * 2;
+        const lobe = new THREE.Mesh(new THREE.SphereGeometry(0.24, 14, 12), mat);
+        lobe.scale.set(1.0, 0.72, 1.0);
+        lobe.position.set(Math.cos(angle) * 0.78, 0.14, Math.sin(angle) * 0.78);
+        lobe.castShadow = true;
+        group.add(lobe);
+      }
+
+      return group;
     }
 
-    function openCart() {
-      triggerHaptic(15);
-      renderCartModalItems();
-      const modal = document.getElementById('cartModal');
-      if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
+    function buildDripperMesh(dripperId) {
+      const cfg = DRIPPERS[dripperId] || DRIPPERS.strawberry;
+      const group = new THREE.Group();
+
+      const mat = new THREE.MeshPhysicalMaterial({
+        color: cfg.hex,
+        roughness: 0.12,
+        metalness: 0.04,
+        clearcoat: 0.92,
+        clearcoatRoughness: 0.10
+      });
+
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.885, 32, 20, 0, Math.PI * 2, 0, Math.PI * 0.46), mat);
+      dome.scale.set(1, 0.86, 1);
+      dome.position.y = 0.18;
+      dome.castShadow = true;
+      group.add(dome);
+
+      const dripCount = 11;
+      for (let i = 0; i < dripCount; i++) {
+        const angle = (i / dripCount) * Math.PI * 2;
+        const len = i % 3 === 0 ? 0.42 : (i % 2 === 0 ? 0.28 : 0.18);
+        const finger = createDripFinger(0.085, len, mat);
+        finger.position.set(Math.cos(angle) * 0.86, 0.26 - len * 0.46, Math.sin(angle) * 0.86);
+        finger.rotation.z = -Math.cos(angle) * 0.12;
+        finger.rotation.x = Math.sin(angle) * 0.12;
+        group.add(finger);
+      }
+
+      const holeMat = new THREE.MeshStandardMaterial({ color: 0x1e1b2e, roughness: 0.8 });
+      const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.05, 16), holeMat);
+      hole.position.y = 0.93;
+      group.add(hole);
+
+      return group;
+    }
+
+    function buildTopperMesh(topperId) {
+      const cfg = TOPPERS.find(t => t.id === topperId) || TOPPERS[0];
+      const group = new THREE.Group();
+
+      const mat = new THREE.MeshPhysicalMaterial({
+        color: cfg.hex,
+        roughness: cfg.translucent ? 0.14 : 0.24,
+        metalness: 0.05,
+        clearcoat: 0.72,
+        transparent: cfg.translucent,
+        opacity: cfg.translucent ? 0.84 : 1.0
+      });
+
+      const peg = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.24, 14), mat);
+      peg.position.y = 0.10;
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.06, 16), mat);
+      collar.position.y = 0.22;
+      group.add(peg, collar);
+
+      const charm = new THREE.Group();
+      charm.position.y = 0.26;
+
+      if (topperId === 'mint-dino') {
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 14), mat);
+        body.scale.set(0.85, 1.15, 0.65);
+        body.position.y = 0.22;
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.20, 16, 14), mat);
+        head.scale.set(1.15, 0.95, 0.70);
+        head.position.set(-0.08, 0.50, 0);
+        const tail = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.36, 10), mat);
+        tail.position.set(0.22, 0.30, 0);
+        tail.rotation.z = -0.75;
+        charm.add(body, head, tail);
+      } else if (topperId === 'pink-snowflake') {
+        const core = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.14, 12), mat);
+        core.rotation.x = Math.PI / 2;
+        core.position.y = 0.34;
+        charm.add(core);
+        for (let i = 0; i < 6; i++) {
+          const ray = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.34, 6), mat);
+          const ang = (i / 6) * Math.PI * 2;
+          ray.position.set(Math.cos(ang) * 0.28, 0.34 + Math.sin(ang) * 0.28, 0);
+          ray.rotation.z = ang - Math.PI / 2;
+          charm.add(ray);
+        }
+      } else if (topperId === 'purple-snowman') {
+        const base = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 14), mat);
+        base.scale.set(1, 0.92, 0.75);
+        base.position.y = 0.20;
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.20, 16, 14), mat);
+        head.scale.set(1, 0.95, 0.78);
+        head.position.y = 0.52;
+        const armL = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 10), mat);
+        armL.position.set(-0.24, 0.26, 0);
+        const armR = armL.clone();
+        armR.position.x = 0.24;
+        charm.add(base, head, armL, armR);
+      } else if (topperId === 'pink-castle') {
+        const keep = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.36, 0.16), mat);
+        keep.position.y = 0.20;
+        const spireC = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.46, 6), mat);
+        spireC.position.y = 0.58;
+        const spireL = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.30, 6), mat);
+        spireL.position.set(-0.17, 0.46, 0);
+        const spireR = spireL.clone();
+        spireR.position.x = 0.17;
+        charm.add(keep, spireC, spireL, spireR);
+      } else if (topperId === 'purple-crystal') {
+        const topPrism = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.44, 6), mat);
+        topPrism.position.y = 0.52;
+        const botPrism = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.34, 6), mat);
+        botPrism.rotation.x = Math.PI;
+        botPrism.position.y = 0.14;
+        const sideShard = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.30, 6), mat);
+        sideShard.position.set(0.20, 0.30, 0);
+        sideShard.rotation.z = -0.35;
+        charm.add(topPrism, botPrism, sideShard);
+      } else {
+        // Aqua Ice Horse
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 14), mat);
+        body.scale.set(1.2, 0.9, 0.6);
+        body.position.y = 0.24;
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.16, 0.36, 12), mat);
+        neck.position.set(-0.12, 0.46, 0);
+        neck.rotation.z = 0.35;
+        const snout = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), mat);
+        snout.scale.set(1.3, 0.85, 0.7);
+        snout.position.set(-0.24, 0.60, 0);
+        charm.add(body, neck, snout);
+      }
+
+      charm.traverse(o => { if (o.isMesh) o.castShadow = true; });
+      group.add(charm);
+      return group;
+    }
+
+    function buildPopsicleMesh(popId) {
+      const cfg = POPSICLES.find(p => p.id === popId) || POPSICLES[0];
+      const group = new THREE.Group();
+
+      // Wooden Popsicle Stick
+      const stickMat = new THREE.MeshStandardMaterial({ color: 0xf1c27d, roughness: 0.62 });
+      const stick = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.15, 0.09), stickMat);
+      stick.position.y = 0.58;
+      stick.castShadow = true;
+      const stickEnd = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.09, 16), stickMat);
+      stickEnd.rotation.x = Math.PI / 2;
+      stickEnd.position.y = 0.02;
+      group.add(stick, stickEnd);
+
+      const popMat = new THREE.MeshPhysicalMaterial({
+        color: cfg.hex,
+        roughness: cfg.translucent ? 0.14 : 0.25,
+        metalness: 0.04,
+        clearcoat: 0.68,
+        transparent: cfg.translucent,
+        opacity: cfg.translucent ? 0.85 : 1.0
+      });
+
+      const head = new THREE.Group();
+      head.position.y = 1.72;
+
+      if (popId === 'pink-snowflake-pop') {
+        const core = new THREE.Mesh(new THREE.CylinderGeometry(0.74, 0.74, 0.24, 24), popMat);
+        core.rotation.x = Math.PI / 2;
+        head.add(core);
+        for (let i = 0; i < 8; i++) {
+          const ang = (i / 8) * Math.PI * 2;
+          const arm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.85, 0.22), popMat);
+          arm.rotation.z = ang;
+          head.add(arm);
+          const tip = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.32, 4), popMat);
+          tip.position.set(Math.cos(ang) * 0.95, Math.sin(ang) * 0.95, 0);
+          tip.rotation.z = ang - Math.PI / 2;
+          head.add(tip);
+        }
+      } else if (popId === 'olaf-face-pop') {
+        const face = new THREE.Mesh(new THREE.SphereGeometry(0.76, 28, 24), popMat);
+        face.scale.set(0.88, 1.16, 0.42);
+        head.add(face);
+        const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.66, 24, 20), popMat);
+        cheek.scale.set(1.06, 0.72, 0.44);
+        cheek.position.y = -0.26;
+        head.add(cheek);
+
+        for (let i = -1; i <= 1; i++) {
+          const tuft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.34, 8), popMat);
+          tuft.position.set(i * 0.14, 0.96, 0);
+          tuft.rotation.z = -i * 0.32;
+          head.add(tuft);
+        }
+
+        const detailMat = new THREE.MeshStandardMaterial({ color: 0xdbeafe, roughness: 0.35 });
+        const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 12), detailMat);
+        eyeL.scale.set(0.85, 1.15, 0.4);
+        eyeL.position.set(-0.22, 0.18, 0.30);
+        const eyeR = eyeL.clone();
+        eyeR.position.x = 0.22;
+        const nose = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.28, 10), detailMat);
+        nose.rotation.x = Math.PI / 2;
+        nose.position.set(0, -0.02, 0.36);
+        const smile = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.045, 10, 20, Math.PI), detailMat);
+        smile.rotation.z = Math.PI;
+        smile.position.set(0, -0.22, 0.29);
+        head.add(eyeL, eyeR, nose, smile);
+      } else if (popId === 'aqua-horse-pop') {
+        const shape = new THREE.Shape();
+        shape.moveTo(-0.55, -0.78);
+        shape.quadraticCurveTo(-0.85, -0.20, -0.42, 0.25);
+        shape.quadraticCurveTo(-0.58, 0.78, 0.02, 0.92);
+        shape.quadraticCurveTo(0.68, 0.88, 0.75, 0.32);
+        shape.quadraticCurveTo(0.82, -0.18, 0.48, -0.68);
+        shape.quadraticCurveTo(0.02, -0.92, -0.55, -0.78);
+
+        const extrudeGeo = new THREE.ExtrudeGeometry(shape, {
+          depth: 0.22,
+          bevelEnabled: true,
+          bevelThickness: 0.08,
+          bevelSize: 0.08,
+          bevelSegments: 4
+        });
+        extrudeGeo.center();
+        head.add(new THREE.Mesh(extrudeGeo, popMat));
+
+        const crest = new THREE.Mesh(new THREE.SphereGeometry(0.32, 18, 16), popMat);
+        crest.scale.set(1.15, 0.9, 0.55);
+        crest.position.set(-0.08, 0.28, 0.14);
+        const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.22, 0.48, 14), popMat);
+        snout.rotation.z = 0.75;
+        snout.position.set(-0.32, 0.12, 0.16);
+        head.add(crest, snout);
+      } else {
+        // White Snowman Pop
+        const bottom = new THREE.Mesh(new THREE.SphereGeometry(0.56, 22, 18), popMat);
+        bottom.scale.set(1.05, 0.85, 0.48);
+        bottom.position.y = -0.42;
+        const mid = new THREE.Mesh(new THREE.SphereGeometry(0.46, 22, 18), popMat);
+        mid.scale.set(1.02, 0.88, 0.48);
+        mid.position.y = 0.15;
+        const top = new THREE.Mesh(new THREE.SphereGeometry(0.42, 22, 18), popMat);
+        top.scale.set(1.05, 0.90, 0.48);
+        top.position.y = 0.68;
+        const footL = new THREE.Mesh(new THREE.SphereGeometry(0.20, 14, 12), popMat);
+        footL.position.set(-0.34, -0.68, 0.04);
+        const footR = footL.clone();
+        footR.position.x = 0.34;
+
+        const faceMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.35 });
+        const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 10), faceMat);
+        eyeL.position.set(-0.14, 0.75, 0.20);
+        const eyeR = eyeL.clone();
+        eyeR.position.x = 0.14;
+        const smile = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.032, 8, 16, Math.PI), faceMat);
+        smile.rotation.z = Math.PI;
+        smile.position.set(0, 0.62, 0.20);
+        head.add(bottom, mid, top, footL, footR, eyeL, eyeR, smile);
+      }
+
+      head.traverse(o => { if (o.isMesh) o.castShadow = true; });
+      group.add(head);
+      return group;
+    }
+
+    // =========================================================================
+    // 6. THREE.JS STAGE SETUP, FLOATING SNOWFLAKES & RESIZEOBSERVER
+    // =========================================================================
+    function initThreeStage() {
+      const mount = document.getElementById('stageCanvasMount');
+      if (!mount || !window.THREE) return;
+
+      scene = new THREE.Scene();
+
+      const w = Math.max(mount.clientWidth, 240);
+      const h = Math.max(mount.clientHeight, 220);
+
+      camera = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
+      camera.position.set(0, targetCamY, targetCamZ);
+      camera.lookAt(0, targetLookY, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(w, h);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputEncoding = THREE.sRGBEncoding;
+
+      mount.innerHTML = '';
+      mount.appendChild(renderer.domElement);
+
+      // Studio Lighting
+      const hemi = new THREE.HemisphereLight(0xffffff, 0xfbcfe8, 0.90);
+      hemi.position.set(0, 10, 0);
+      scene.add(hemi);
+
+      const keyLight = new THREE.DirectionalLight(0xfffbeb, 0.95);
+      keyLight.position.set(4.5, 9, 6);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.width = 1024;
+      keyLight.shadow.mapSize.height = 1024;
+      keyLight.shadow.camera.near = 1;
+      keyLight.shadow.camera.far = 25;
+      keyLight.shadow.bias = -0.0005;
+      scene.add(keyLight);
+
+      const rimLight = new THREE.DirectionalLight(0x7dd3fc, 0.58);
+      rimLight.position.set(-5, 5, -5);
+      scene.add(rimLight);
+
+      // Glowing Pastel Pedestal (always visible on empty stage)
+      const pedestal = new THREE.Group();
+      const baseMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.24, metalness: 0.05 });
+      const baseDisc = new THREE.Mesh(new THREE.CylinderGeometry(2.15, 2.38, 0.24, 48), baseMat);
+      baseDisc.position.y = -0.12;
+      baseDisc.receiveShadow = true;
+      pedestal.add(baseDisc);
+
+      const glowRingMat = new THREE.MeshStandardMaterial({
+        color: 0xf472b6,
+        emissive: 0xf472b6,
+        emissiveIntensity: 0.28,
+        roughness: 0.25
+      });
+      const glowRing = new THREE.Mesh(new THREE.TorusGeometry(2.16, 0.058, 16, 64), glowRingMat);
+      glowRing.rotation.x = Math.PI / 2;
+      pedestal.add(glowRing);
+
+      const padMat = new THREE.MeshStandardMaterial({ color: 0xe0f2fe, roughness: 0.35 });
+      const pad = new THREE.Mesh(new THREE.CylinderGeometry(1.78, 1.78, 0.025, 48), padMat);
+      pad.position.y = 0.01;
+      pad.receiveShadow = true;
+      pedestal.add(pad);
+      scene.add(pedestal);
+
+      // Subtle Floating Snowflakes in Background
+      snowGroup = new THREE.Group();
+      const snowMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xbae6fd,
+        emissiveIntensity: 0.35,
+        roughness: 0.2
+      });
+      for (let i = 0; i < 22; i++) {
+        const flake = new THREE.Mesh(new THREE.SphereGeometry(0.045 + Math.random() * 0.04, 8, 8), snowMat);
+        flake.position.set(
+          (Math.random() - 0.5) * 7.5,
+          0.4 + Math.random() * 4.8,
+          (Math.random() - 0.5) * 5.0 - 1.2
+        );
+        flake.userData = {
+          speed: 0.004 + Math.random() * 0.006,
+          drift: Math.random() * Math.PI * 2
+        };
+        snowGroup.add(flake);
+      }
+      scene.add(snowGroup);
+
+      // Empty Treat Container Group
+      buildGroup = new THREE.Group();
+      scene.add(buildGroup);
+
+      // Pointer Drag Rotation (Mouse + Touch)
+      const dom = renderer.domElement;
+      dom.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        prevPointer = { x: e.clientX, y: e.clientY };
+      });
+      window.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - prevPointer.x;
+        const dy = e.clientY - prevPointer.y;
+        prevPointer = { x: e.clientX, y: e.clientY };
+        targetRot.y += dx * 0.012;
+        targetRot.x = Math.max(-0.30, Math.min(0.52, targetRot.x + dy * 0.007));
+      });
+      window.addEventListener('pointerup', () => { isDragging = false; });
+      window.addEventListener('pointercancel', () => { isDragging = false; });
+
+      // ResizeObserver for seamless iPad Portrait/Landscape rotation
+      if (typeof ResizeObserver !== 'undefined') {
+        resizeObserver = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            const cw = Math.max(entry.contentRect.width, 120);
+            const ch = Math.max(entry.contentRect.height, 120);
+            camera.aspect = cw / ch;
+            camera.updateProjectionMatrix();
+            renderer.setSize(cw, ch);
+          }
+        });
+        resizeObserver.observe(mount);
+      }
+
+      animateLoop();
+    }
+
+    function updateCameraFraming(totalHeight) {
+      const h = Math.max(totalHeight, 1.8);
+      targetLookY = h * 0.46;
+      targetCamY = Math.max(2.05, h * 0.54 + 0.95);
+      targetCamZ = Math.max(6.4, h * 1.48 + 3.6);
+    }
+
+    function rebuild3DStage(animatePart = 'none') {
+      if (!buildGroup) return;
+      while (buildGroup.children.length > 0) {
+        buildGroup.remove(buildGroup.children[0]);
+      }
+      springActors = [];
+
+      const emptyOverlay = document.getElementById('emptyStageOverlay');
+
+      if (activeMode === 'popsicle') {
+        if (!selectedPopsicleId) {
+          emptyOverlay.style.opacity = '1';
+          updateCameraFraming(1.8);
+          return;
+        }
+        emptyOverlay.style.opacity = '0';
+        const popMesh = buildPopsicleMesh(selectedPopsicleId);
+        popMesh.position.y = 2.6;
+        popMesh.scale.setScalar(0.18);
+        popMesh.rotation.y = -Math.PI;
+        buildGroup.add(popMesh);
+
+        springActors.push({
+          mesh: popMesh,
+          targetY: 0.22,
+          velY: 0,
+          targetScale: 1.05,
+          velScale: 0,
+          spinIn: true
+        });
+        updateCameraFraming(3.1);
+        return;
+      }
+
+      // Cup & Cone Builder Mode
+      if (!sundae.baseId) {
+        emptyOverlay.style.opacity = '1';
+        updateCameraFraming(1.8);
+        return;
+      }
+      emptyOverlay.style.opacity = '0';
+
+      // 1. Base
+      const baseMesh = buildBaseMesh(sundae.baseId);
+      const animBase = animatePart === 'base';
+      baseMesh.position.y = animBase ? 2.5 : 0.02;
+      baseMesh.scale.setScalar(animBase ? 0.42 : 1.0);
+      buildGroup.add(baseMesh);
+      if (animBase) {
+        springActors.push({ mesh: baseMesh, targetY: 0.02, velY: 0, targetScale: 1.0, velScale: 0 });
+      }
+
+      // 2. Stacked Flavors
+      let stackY = sundae.baseId === 'cup' ? 1.04 : 1.62;
+      const scoopStep = 0.56;
+      sundae.scoops.forEach((flvId, idx) => {
+        const scoopMesh = buildScoopMesh(flvId);
+        const isNewest = animatePart === 'scoop' && idx === sundae.scoops.length - 1;
+        scoopMesh.position.y = isNewest ? stackY + 2.2 : stackY;
+        scoopMesh.scale.setScalar(isNewest ? 0.45 : 1.0);
+        buildGroup.add(scoopMesh);
+        if (isNewest) {
+          springActors.push({ mesh: scoopMesh, targetY: stackY, velY: 0, targetScale: 1.0, velScale: 0 });
+        }
+        stackY += scoopStep;
+      });
+
+      const topScoopY = sundae.scoops.length > 0
+        ? (sundae.baseId === 'cup' ? 1.04 : 1.62) + (sundae.scoops.length - 1) * scoopStep
+        : null;
+
+      // 3. Optional Dripper
+      let topperY = topScoopY !== null ? topScoopY + 0.88 : stackY;
+      if (sundae.dripperId && topScoopY !== null) {
+        const dripMesh = buildDripperMesh(sundae.dripperId);
+        const animDrip = animatePart === 'dripper';
+        dripMesh.position.y = animDrip ? topScoopY + 2.1 : topScoopY;
+        dripMesh.scale.setScalar(animDrip ? 0.50 : 1.0);
+        buildGroup.add(dripMesh);
+        if (animDrip) {
+          springActors.push({ mesh: dripMesh, targetY: topScoopY, velY: 0, targetScale: 1.0, velScale: 0 });
+        }
+        topperY = topScoopY + 0.90;
+      }
+
+      // 4. Optional Topper
+      if (sundae.topperId && topScoopY !== null) {
+        const topMesh = buildTopperMesh(sundae.topperId);
+        const animTop = animatePart === 'topper';
+        topMesh.position.y = animTop ? topperY + 1.8 : topperY;
+        topMesh.scale.setScalar(animTop ? 0.20 : 1.0);
+        buildGroup.add(topMesh);
+        if (animTop) {
+          springActors.push({ mesh: topMesh, targetY: topperY, velY: 0, targetScale: 1.0, velScale: 0 });
+        }
+      }
+
+      const totalHeight = (sundae.topperId && topScoopY !== null) ? topperY + 0.95 : stackY + 0.45;
+      updateCameraFraming(totalHeight);
+    }
+
+    function animateLoop() {
+      requestAnimationFrame(animateLoop);
+      if (!renderer || !scene || !camera || !buildGroup) return;
+
+      if (autoSpin && !isDragging && buildGroup.children.length > 0) {
+        targetRot.y += 0.0085;
+      }
+
+      buildGroup.rotation.y += (targetRot.y - buildGroup.rotation.y) * 0.12;
+      buildGroup.rotation.x += (targetRot.x - buildGroup.rotation.x) * 0.12;
+
+      camera.position.y += (targetCamY - camera.position.y) * 0.08;
+      camera.position.z += (targetCamZ - camera.position.z) * 0.08;
+      camera.lookAt(0, targetLookY, 0);
+
+      // Gentle falling & drifting snowflakes
+      if (snowGroup) {
+        const t = performance.now() * 0.001;
+        snowGroup.children.forEach((flake) => {
+          flake.position.y -= flake.userData.speed;
+          flake.position.x += Math.sin(t + flake.userData.drift) * 0.002;
+          if (flake.position.y < 0.2) flake.position.y = 5.0;
+        });
+      }
+
+      // Spring physics for newly added parts
+      for (let i = 0; i < springActors.length; i++) {
+        const a = springActors[i];
+        const fY = (a.targetY - a.mesh.position.y) * 0.16;
+        a.velY = (a.velY + fY) * 0.72;
+        a.mesh.position.y += a.velY;
+
+        const s = a.mesh.scale.x;
+        const fS = (a.targetScale - s) * 0.20;
+        a.velScale = (a.velScale + fS) * 0.70;
+        a.mesh.scale.setScalar(Math.max(0.05, s + a.velScale));
+
+        if (a.spinIn) {
+          a.mesh.rotation.y += (0 - a.mesh.rotation.y) * 0.14;
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // =========================================================================
+    // 7. BUILDER ACTIONS & STRICT PRICING
+    // =========================================================================
+    function switchMode(mode) {
+      if (activeMode === mode) return;
+      activeMode = mode;
+      clearBuildSilent();
+      playPop(600);
+      refreshBuilderUI();
+    }
+
+    function selectBase(baseId) {
+      const changed = sundae.baseId !== baseId;
+      sundae.baseId = baseId;
+      playPop(520);
+      rebuild3DStage(changed ? 'base' : 'none');
+      refreshBuilderUI();
+    }
+
+    function addScoop(flavorId) {
+      if (!sundae.baseId) {
+        showNotice('Pick a Cup or Cone First!', 'Tap Snowflake Cup or Waffle Cone in Step 1 before stacking flavors.', '🍦');
+        return;
+      }
+      if (sundae.scoops.length >= MAX_SCOOPS) {
+        showNotice('Super Tall Stack!', `You can stack up to ${MAX_SCOOPS} delicious scoops on one treat!`, '🏔️');
+        return;
+      }
+      sundae.scoops.push(flavorId);
+      playPop(620 + sundae.scoops.length * 42);
+      rebuild3DStage('scoop');
+      refreshBuilderUI();
+    }
+
+    function undoScoop() {
+      if (sundae.scoops.length === 0) return;
+      sundae.scoops.pop();
+      if (sundae.scoops.length === 0) {
+        sundae.dripperId = null;
+        sundae.topperId = null;
+      }
+      playPop(420);
+      rebuild3DStage('none');
+      refreshBuilderUI();
+    }
+
+    function toggleDripper(dripperId) {
+      if (!sundae.baseId || sundae.scoops.length === 0) {
+        showNotice('Add a Flavor Scoop First!', 'Stack at least 1 ice cream scoop so the dripper can sit on top.', '🍓');
+        return;
+      }
+      sundae.dripperId = sundae.dripperId === dripperId ? null : dripperId;
+      playPop(sundae.dripperId ? 740 : 410);
+      rebuild3DStage(sundae.dripperId ? 'dripper' : 'none');
+      refreshBuilderUI();
+    }
+
+    function toggleTopper(topperId) {
+      if (!sundae.baseId || sundae.scoops.length === 0) {
+        showNotice('Add a Flavor Scoop First!', 'Stack at least 1 ice cream scoop before popping on a topper!', '🦕');
+        return;
+      }
+      sundae.topperId = sundae.topperId === topperId ? null : topperId;
+      playPop(sundae.topperId ? 820 : 410);
+      rebuild3DStage(sundae.topperId ? 'topper' : 'none');
+      refreshBuilderUI();
+    }
+
+    function selectPopsicle(popId) {
+      selectedPopsicleId = popId;
+      playPop(680);
+      rebuild3DStage('popsicle');
+      refreshBuilderUI();
+    }
+
+    function clearBuildSilent() {
+      sundae = { baseId: null, scoops: [], dripperId: null, topperId: null };
+      selectedPopsicleId = null;
+      rebuild3DStage('none');
+    }
+
+    function clearCurrentBuild() {
+      clearBuildSilent();
+      playPop(380);
+      refreshBuilderUI();
+    }
+
+    function computeCurrentTreat() {
+      if (activeMode === 'popsicle') {
+        if (!selectedPopsicleId) {
+          return { ready: false, price: 0, title: '', breakdown: 'Tap a popsicle to preview ($2.00)' };
+        }
+        const p = POPSICLES.find(x => x.id === selectedPopsicleId);
+        return {
+          ready: true,
+          price: POPSICLE_PRICE,
+          title: p.name,
+          breakdown: 'Frozen Paleta on Wooden Stick ($2.00)'
+        };
+      }
+
+      if (!sundae.baseId) {
+        return { ready: false, price: 0, title: '', breakdown: 'Base $3.00 includes 1st scoop' };
+      }
+
+      const base = BASES[sundae.baseId];
+      const extraScoops = Math.max(0, sundae.scoops.length - 1);
+      const dripCost = sundae.dripperId ? DRIPPER_PRICE : 0;
+      const topCost = sundae.topperId ? TOPPER_PRICE : 0;
+      const total = BASE_PRICE + (extraScoops * EXTRA_SCOOP_PRICE) + dripCost + topCost;
+
+      const parts = [base.name];
+      if (sundae.scoops.length > 0) {
+        parts.push(sundae.scoops.map(id => FLAVORS[id].name).join(' + '));
+      }
+      if (sundae.dripperId) parts.push(DRIPPERS[sundae.dripperId].name);
+      if (sundae.topperId) {
+        const t = TOPPERS.find(x => x.id === sundae.topperId);
+        if (t) parts.push(t.name);
+      }
+
+      const bd = [`Base $${BASE_PRICE.toFixed(2)}`];
+      if (extraScoops > 0) bd.push(`+${extraScoops} Extra Scoop${extraScoops > 1 ? 's' : ''} ($${extraScoops.toFixed(2)})`);
+      if (sundae.dripperId) bd.push('+Dripper ($1.00)');
+      if (sundae.topperId) bd.push('+Topper ($1.00)');
+
+      return {
+        ready: sundae.scoops.length > 0,
+        price: total,
+        title: parts.join(' • '),
+        breakdown: bd.join(' | ')
+      };
+    }
+
+    function addCurrentToTray() {
+      const treat = computeCurrentTreat();
+      if (!treat.ready) {
+        if (activeMode === 'sundae' && sundae.baseId && sundae.scoops.length === 0) {
+          showNotice('Add a Flavor Scoop!', 'Your 1st flavor scoop is included free—tap a flavor to stack it!', '🍨');
+        } else {
+          showNotice('Build a Treat First!', activeMode === 'sundae' ? 'Pick a Cup or Cone and stack a flavor first!' : 'Tap any popsicle first!', '✨');
+        }
+        return;
+      }
+
+      tray.push({
+        uid: Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        title: treat.title,
+        breakdown: treat.breakdown,
+        price: treat.price
+      });
+
+      playKartBell();
+      showToast(`Added ${treat.title.split(' • ')[0]} to Tray! ✨`);
+      clearBuildSilent();
+      refreshBuilderUI();
+      refreshTrayAndTotalsUI();
+    }
+
+    // =========================================================================
+    // 8. RENDERING & UI STATE SYNC
+    // =========================================================================
+    function renderStaticOptionGrids() {
+      document.getElementById('topperGrid').innerHTML = TOPPERS.map(t => `
+        <button
+          id="btnTop-${t.id}"
+          type="button"
+          onclick="toggleTopper('${t.id}')"
+          class="btn-pop p-2 rounded-2xl border-2 border-slate-200 bg-white text-left flex items-center gap-2 shadow-sm"
+        >
+          <span
+            class="w-8 h-8 rounded-xl flex items-center justify-center text-lg flex-shrink-0 border border-black/10"
+            style="background:${t.swatch}33;"
+          >${t.emoji}</span>
+          <div class="min-w-0">
+            <p class="font-display font-bold text-xs text-slate-800 leading-tight truncate">${t.name}</p>
+            <p class="text-[10px] font-bold text-slate-500">+$1.00</p>
+          </div>
+        </button>
+      `).join('');
+
+      document.getElementById('popsicleGrid').innerHTML = POPSICLES.map(p => `
+        <button
+          id="btnPop-${p.id}"
+          type="button"
+          onclick="selectPopsicle('${p.id}')"
+          class="btn-pop p-3.5 rounded-2xl border-2 ${p.cardClass} text-left flex items-center gap-3 shadow-sm"
+        >
+          <span class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-3xl shadow-sm flex-shrink-0">
+            ${p.emoji}
+          </span>
+          <div class="min-w-0">
+            <p class="font-display font-bold text-sm sm:text-base text-slate-800 leading-tight">${p.name}</p>
+            <p class="text-xs font-extrabold text-pink-600 mt-0.5">$${POPSICLE_PRICE.toFixed(2)}</p>
+          </div>
+        </button>
+      `).join('');
+    }
+
+    function refreshBuilderUI() {
+      const isSundae = activeMode === 'sundae';
+
+      document.getElementById('tabSundae').className = isSundae
+        ? 'btn-pop py-2.5 px-4 rounded-2xl font-display font-bold text-sm sm:text-lg flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md border-2 border-pink-300'
+        : 'btn-pop py-2.5 px-4 rounded-2xl font-display font-bold text-sm sm:text-lg flex items-center justify-center gap-2 bg-pink-50 hover:bg-pink-100 text-pink-900 border-2 border-pink-200';
+
+      document.getElementById('tabPopsicle').className = !isSundae
+        ? 'btn-pop py-2.5 px-4 rounded-2xl font-display font-bold text-sm sm:text-lg flex items-center justify-center gap-2 bg-gradient-to-r from-sky-500 to-purple-600 text-white shadow-md border-2 border-sky-300'
+        : 'btn-pop py-2.5 px-4 rounded-2xl font-display font-bold text-sm sm:text-lg flex items-center justify-center gap-2 bg-sky-50 hover:bg-sky-100 text-sky-900 border-2 border-sky-200';
+
+      document.getElementById('sundaeBuilderView').classList.toggle('hidden', !isSundae);
+      document.getElementById('popsicleBuilderView').classList.toggle('hidden', isSundae);
+
+      document.getElementById('emptyOverlayTitle').textContent = isSundae
+        ? 'Tap a Cup or Cone to start!'
+        : 'Tap a Popsicle to see it in 3D!';
+
+      // Bases
+      ['cup', 'cone'].forEach(id => {
+        const el = document.getElementById(`btnBase-${id}`);
+        if (!el) return;
+        const active = sundae.baseId === id;
+        el.className = active
+          ? 'btn-pop p-3 rounded-2xl border-2 border-pink-500 bg-pink-50 ring-2 ring-pink-200 text-left flex items-center gap-2.5 shadow-md'
+          : 'btn-pop p-3 rounded-2xl border-2 border-slate-200 bg-white hover:border-purple-300 text-left flex items-center gap-2.5 shadow-sm';
+      });
+
+      // Scoop Chips
+      document.getElementById('scoopCounterBadge').textContent = `${sundae.scoops.length} / ${MAX_SCOOPS} Scoops (+$1 extra)`;
+      const stackBox = document.getElementById('scoopStackBox');
+      if (sundae.scoops.length > 0) {
+        stackBox.classList.remove('hidden');
+        document.getElementById('scoopStackChips').innerHTML = sundae.scoops.map((fId, idx) => {
+          const f = FLAVORS[fId];
+          return `<span class="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${f.chipClass}">#${idx + 1} ${f.name} ${idx === 0 ? '(Free)' : '(+$1)'}</span>`;
+        }).join('');
+      } else {
+        stackBox.classList.add('hidden');
+      }
+
+      // Drippers
+      Object.keys(DRIPPERS).forEach(id => {
+        const el = document.getElementById(`btnDrip-${id}`);
+        if (!el) return;
+        const active = sundae.dripperId === id;
+        el.className = active
+          ? 'btn-pop p-2.5 rounded-2xl border-2 border-pink-500 bg-pink-50 ring-2 ring-pink-200 text-center shadow-md'
+          : 'btn-pop p-2.5 rounded-2xl border-2 border-slate-200 bg-white text-center shadow-sm';
+      });
+
+      // Toppers
+      TOPPERS.forEach(t => {
+        const el = document.getElementById(`btnTop-${t.id}`);
+        if (!el) return;
+        const active = sundae.topperId === t.id;
+        el.className = active
+          ? 'btn-pop p-2 rounded-2xl border-2 border-pink-500 bg-pink-50 ring-2 ring-pink-200 text-left flex items-center gap-2 shadow-md'
+          : 'btn-pop p-2 rounded-2xl border-2 border-slate-200 bg-white text-left flex items-center gap-2 shadow-sm';
+      });
+
+      // Popsicles
+      POPSICLES.forEach(p => {
+        const el = document.getElementById(`btnPop-${p.id}`);
+        if (!el) return;
+        const active = selectedPopsicleId === p.id;
+        el.className = active
+          ? 'btn-pop p-3.5 rounded-2xl border-2 border-pink-500 bg-pink-50 ring-2 ring-pink-200 text-left flex items-center gap-3 shadow-md'
+          : `btn-pop p-3.5 rounded-2xl border-2 ${p.cardClass} text-left flex items-center gap-3 shadow-sm`;
+      });
+
+      // Right-Pane Bottom Action Bar
+      const treat = computeCurrentTreat();
+      document.getElementById('liveItemPrice').textContent = `$${treat.price.toFixed(2)}`;
+      document.getElementById('livePriceNote').textContent = treat.breakdown;
+
+      const addBtn = document.getElementById('addToTrayBtn');
+      if (treat.ready) {
+        addBtn.className = 'btn-pop flex-shrink-0 px-4 sm:px-6 py-3 rounded-2xl font-display font-bold text-sm sm:text-base bg-gradient-to-r from-pink-500 via-purple-600 to-sky-500 hover:from-pink-400 hover:to-sky-400 text-white shadow-lg';
+        addBtn.textContent = `➕ Add to Tray ($${treat.price.toFixed(2)})`;
+      } else {
+        addBtn.className = 'btn-pop flex-shrink-0 px-4 sm:px-6 py-3 rounded-2xl font-display font-bold text-sm sm:text-base bg-slate-200 text-slate-500 shadow-sm';
+        addBtn.textContent = (isSundae && sundae.baseId && sundae.scoops.length === 0)
+          ? 'Add 1 Scoop 🍨'
+          : '➕ Add to Tray';
       }
     }
 
-    function closeCart() {
-      const modal = document.getElementById('cartModal');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-      }
+    // =========================================================================
+    // 9. TRAY, TIP PICKER, NOTICE & RECEIPT MODALS
+    // =========================================================================
+    function getTraySubtotal() {
+      return tray.reduce((sum, item) => sum + item.price, 0);
     }
 
-    function showNotice(msg) {
-      const msgEl = document.getElementById('noticeMessage');
-      const modal = document.getElementById('noticeModal');
-      if (msgEl) msgEl.textContent = msg;
-      if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
+    function setTip(amount) {
+      tipAmount = Math.max(0, Math.round(amount));
+      playSparkleChime();
+      refreshTrayAndTotalsUI();
+    }
+
+    function adjustTip(delta) {
+      const next = Math.max(0, tipAmount + delta);
+      if (next === tipAmount) return;
+      tipAmount = next;
+      playSparkleChime();
+      refreshTrayAndTotalsUI();
+    }
+
+    function refreshTrayAndTotalsUI() {
+      const subtotal = getTraySubtotal();
+      const grandTotal = subtotal + tipAmount;
+
+      // Bottom bar (shows live count & subtotal)
+      document.getElementById('trayBadgeCount').textContent = tray.length;
+      document.getElementById('traySubtotalBar').textContent = `$${subtotal.toFixed(2)}`;
+
+      // Checkout Modal Totals & Tip Picker State
+      document.getElementById('checkoutSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+      document.getElementById('checkoutTip').textContent = `$${tipAmount.toFixed(2)}`;
+      document.getElementById('checkoutGrandTotal').textContent = `$${grandTotal.toFixed(2)}`;
+      document.getElementById('tipStepperValue').textContent = `$${tipAmount}`;
+
+      [0, 1, 2, 3, 5].forEach(val => {
+        const btn = document.getElementById(`tipBtn-${val}`);
+        if (!btn) return;
+        const active = tipAmount === val;
+        btn.className = active
+          ? 'btn-pop py-2 px-1 rounded-xl font-display font-bold text-xs sm:text-sm border-2 border-pink-500 bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md'
+          : 'btn-pop py-2 px-1 rounded-xl font-display font-bold text-xs sm:text-sm border-2 border-pink-200 bg-white text-purple-900 hover:bg-pink-50';
+      });
+    }
+
+    function renderTrayItems() {
+      const list = document.getElementById('trayItemsList');
+      if (tray.length === 0) {
+        list.innerHTML = `
+          <div class="text-center py-6 text-slate-500">
+            <p class="text-4xl mb-1">🍨</p>
+            <p class="font-display font-bold text-base">Your tray is empty!</p>
+          </div>
+        `;
+        return;
       }
+
+      list.innerHTML = tray.map(item => `
+        <div class="bg-white rounded-2xl p-3 border border-pink-200 shadow-sm flex items-center justify-between gap-2.5">
+          <div class="min-w-0">
+            <p class="font-display font-bold text-sm sm:text-base text-slate-800 leading-snug">${item.title}</p>
+            <p class="text-[11px] font-bold text-slate-500">${item.breakdown}</p>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <span class="font-display font-bold text-base text-purple-900">$${item.price.toFixed(2)}</span>
+            <button
+              type="button"
+              onclick="removeTrayItem('${item.uid}')"
+              aria-label="Remove item"
+              class="btn-pop w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-sm flex items-center justify-center"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function removeTrayItem(uid) {
+      tray = tray.filter(i => i.uid !== uid);
+      playPop(420);
+      renderTrayItems();
+      refreshTrayAndTotalsUI();
+    }
+
+    function clearEntireTray() {
+      tray = [];
+      tipAmount = 0;
+      playPop(360);
+      renderTrayItems();
+      refreshTrayAndTotalsUI();
+    }
+
+    function openTrayOrEmptyNotice() {
+      if (tray.length === 0) {
+        showNotice('Tray is Empty!', 'Build a 3D cup, cone, or popsicle and tap "➕ Add to Tray" first!', '🛒');
+        return;
+      }
+      renderTrayItems();
+      refreshTrayAndTotalsUI();
+      document.getElementById('trayModal').classList.add('is-open');
+    }
+
+    function closeTrayModal() {
+      document.getElementById('trayModal').classList.remove('is-open');
+    }
+
+    function showNotice(title, text, emoji = '⛄') {
+      document.getElementById('noticeTitle').textContent = title;
+      document.getElementById('noticeText').textContent = text;
+      document.getElementById('noticeEmoji').textContent = emoji;
+      document.getElementById('noticeModal').classList.add('is-open');
     }
 
     function closeNotice() {
-      const modal = document.getElementById('noticeModal');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-      }
+      document.getElementById('noticeModal').classList.remove('is-open');
     }
 
-    function handleBottomCartClick() {
-      const totalItems = Object.values(cart).reduce((sum, q) => sum + q, 0);
-      if (totalItems === 0) {
-        triggerHaptic([30, 40, 30]);
-        showNotice('Your ice cream tray is empty! Tap any treat to add it.');
-        return;
-      }
-      openCart();
+    function showToast(msg) {
+      const host = document.getElementById('toastHost');
+      const el = document.createElement('div');
+      el.className = 'toast-pill bg-purple-900 text-white font-display font-bold text-sm sm:text-base px-5 py-2.5 rounded-full shadow-xl border-2 border-pink-300 whitespace-nowrap';
+      el.textContent = msg;
+      host.innerHTML = '';
+      host.appendChild(el);
+      setTimeout(() => { if (el.parentNode) el.remove(); }, 2200);
     }
 
-    function handleCheckoutAttempt() {
-      const totalItems = Object.values(cart).reduce((sum, q) => sum + q, 0);
-      if (totalItems === 0) {
-        triggerHaptic([30, 40, 30]);
-        showNotice('Your ice cream tray is empty! Tap any treat to add it.');
-        return;
-      }
-      openCart();
-    }
-
-    function placeOrder() {
-      const entries = Object.entries(cart).filter(([_, qty]) => qty > 0);
-      if (entries.length === 0) {
-        closeCart();
-        showNotice('Your ice cream tray is empty! Tap any treat to add it.');
+    function payAndPrintReceipt() {
+      if (tray.length === 0) {
+        closeTrayModal();
+        showNotice('Tray is Empty!', 'Add at least one treat before printing your receipt!', '🍨');
         return;
       }
 
-      closeCart();
-      triggerHaptic([30, 50, 30]);
-      playIceCreamJingle();
+      closeTrayModal();
+      playKartBell();
 
-      // Generate random order number (e.g., #LILI-104)
-      const randomNum = Math.floor(100 + Math.random() * 900);
-      const orderNumEl = document.getElementById('receiptOrderNumber');
-      if (orderNumEl) {
-        orderNumEl.textContent = `ORDER #LILI-${randomNum}`;
-      }
+      const orderId = Math.floor(100 + Math.random() * 900);
+      document.getElementById('receiptOrderNumber').textContent = `#LILI-${orderId}`;
+      document.getElementById('receiptTimestamp').textContent = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
 
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const timestampEl = document.getElementById('receiptTimestamp');
-      if (timestampEl) {
-        timestampEl.textContent = `TODAY • ${timeStr}`;
-      }
+      const subtotal = getTraySubtotal();
+      const grandTotal = subtotal + tipAmount;
 
-      let total = 0;
-      const receiptListEl = document.getElementById('receiptItemsList');
-      if (receiptListEl) {
-        receiptListEl.innerHTML = entries.map(([id, qty]) => {
-          const item = MENU_ITEMS.find(i => i.id === id);
-          if (!item) return '';
-          const lineTotal = item.price * qty;
-          total += lineTotal;
-          return `
-            <div class="flex items-start justify-between gap-2">
-              <div class="font-medium text-slate-700">
-                <span class="font-display font-bold text-pink-600 mr-1">${qty}×</span>
-                <span>${item.name}</span>
-              </div>
-              <span class="font-display font-bold text-slate-800 flex-shrink-0">${formatMoney(lineTotal)}</span>
-            </div>
-          `;
-        }).join('');
-      }
+      document.getElementById('receiptItemsList').innerHTML = tray.map(item => `
+        <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2">
+          <div>
+            <p class="font-bold text-slate-800 leading-snug">${item.title}</p>
+            <p class="text-[11px] text-slate-500">${item.breakdown}</p>
+          </div>
+          <span class="font-display font-bold text-slate-900 flex-shrink-0">$${item.price.toFixed(2)}</span>
+        </div>
+      `).join('');
 
-      const receiptTotalEl = document.getElementById('receiptTotalAmount');
-      if (receiptTotalEl) {
-        receiptTotalEl.textContent = formatMoney(total);
-      }
+      document.getElementById('receiptSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+      document.getElementById('receiptTip').textContent = `$${tipAmount.toFixed(2)}`;
+      document.getElementById('receiptGrandTotal').textContent = `$${grandTotal.toFixed(2)}`;
+      document.getElementById('receiptTipThankYou').classList.toggle('hidden', tipAmount <= 0);
 
-      const receiptModal = document.getElementById('receiptModal');
-      if (receiptModal) {
-        receiptModal.classList.remove('hidden');
-        receiptModal.classList.add('flex');
-      }
+      document.getElementById('receiptModal').classList.add('is-open');
     }
 
-    function finishOrderAndReset() {
-      const receiptModal = document.getElementById('receiptModal');
-      if (receiptModal) {
-        receiptModal.classList.add('hidden');
-        receiptModal.classList.remove('flex');
-      }
-      clearCart();
-      playSparkleChime(1.2);
+    function startNewOrder() {
+      document.getElementById('receiptModal').classList.remove('is-open');
+      tray = [];
+      tipAmount = 0;
+      clearBuildSilent();
+      refreshBuilderUI();
+      refreshTrayAndTotalsUI();
+      playPop(620);
     }
 
-    // ==========================================
-    // 6. DECORATIVE SNOWFLAKES INITIALIZER
-    // ==========================================
-    function createSnowflakes() {
-      const layer = document.getElementById('snowLayer');
-      if (!layer) return;
-
-      const glyphs = ['❄️', '❅', '❆', '✨'];
-      const count = 32;
-
-      for (let i = 0; i < count; i++) {
-        const el = document.createElement('div');
-        el.className = 'snowflake-bg';
-        el.textContent = glyphs[i % glyphs.length];
-        el.style.left = `${Math.random() * 100}%`;
-        el.style.fontSize = `${14 + Math.random() * 16}px`;
-        el.style.animationDuration = `${9 + Math.random() * 12}s`;
-        el.style.animationDelay = `${-Math.random() * 15}s`;
-        layer.appendChild(el);
-      }
-    }
-
-    // Safe initialization whether DOMContentLoaded has already fired or not
+    // =========================================================================
+    // 10. RELIABLE STARTUP & iPad PINCH-ZOOM GUARD
+    // =========================================================================
     function initApp() {
-      createSnowflakes();
-      renderCategories();
-      renderMenu();
-      updateCartTotalsUI();
+      renderStaticOptionGrids();
+      refreshBuilderUI();
+      refreshTrayAndTotalsUI();
+      initThreeStage();
     }
 
     if (document.readyState === 'loading') {
@@ -1055,6 +2145,12 @@
     } else {
       initApp();
     }
+
+    // Prevent pinch-to-zoom on iPadOS / iOS Safari
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
   </script>
 </body>
 </html>
